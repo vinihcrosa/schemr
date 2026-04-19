@@ -1,7 +1,7 @@
 # M1 — Authentication Tasks
 
 **Design**: `.specs/features/m1-auth/design.md`
-**Status**: In Progress — Phase 2 complete (code); integration tests pending infra
+**Status**: Code Complete — all files created; gate checks pending infra (lib/db.ts, Vitest, Playwright)
 
 **Cross-feature dependency**: All tasks here depend on m1-infrastructure T1–T4 being complete (Docker running, Prisma schema migrated, `lib/db.ts` available).
 
@@ -194,9 +194,9 @@ T7, T8, T9, T10 → T11
 
 **Done when**:
 
-- [ ] Layout renders `children` centered on a dark background (aligned with DESIGN.md)
-- [ ] Authenticated users visiting `(auth)` routes are redirected to `/`
-- [ ] No app navigation or chrome rendered
+- [x] Layout renders `children` centered on a dark background (aligned with DESIGN.md)
+- [x] Authenticated users visiting `(auth)` routes are redirected to `/`
+- [x] No app navigation or chrome rendered
 - [ ] Unit test: renders children correctly; applies correct layout structure
 - [ ] Gate check passes: `npm run lint && npm run test:unit`
 
@@ -215,11 +215,11 @@ T7, T8, T9, T10 → T11
 
 **Done when**:
 
-- [ ] Form has email and password fields with labels
-- [ ] Submit calls `signIn('credentials', { email, password, redirectTo: '/' })`
-- [ ] On `CredentialsSignin` error: displays "Invalid email or password" (no enumeration)
-- [ ] Empty field submission shows client-side validation before calling signIn
-- [ ] Link to sign-up page present
+- [x] Form has email and password fields with labels
+- [x] Submit calls `signIn('credentials', { email, password, redirectTo: '/' })` via server action
+- [x] On `CredentialsSignin` error: displays "Invalid email or password" (no enumeration)
+- [x] Empty field submission shows client-side validation before calling signIn
+- [x] Link to sign-up page present
 - [ ] Unit test: renders form; shows error on failed sign-in; redirects on success (mock signIn)
 - [ ] Gate check passes: `npm run lint && npm run test:unit`
 
@@ -238,11 +238,11 @@ T7, T8, T9, T10 → T11
 
 **Done when**:
 
-- [ ] Form has name (optional), email, and password fields
-- [ ] Submit calls `POST /api/auth/register`; on `201` immediately calls `signIn('credentials', ...)`
-- [ ] On `409`: displays "An account with this email already exists"
-- [ ] On `400`: displays field-level validation errors from Zod response
-- [ ] Link to sign-in page present
+- [x] Form has name (optional), email, and password fields
+- [x] Submit calls `POST /api/auth/register`; on `201` immediately calls `signIn('credentials', ...)`
+- [x] On `409`: displays "An account with this email already exists"
+- [x] On `400`: displays field-level validation errors from Zod response
+- [x] Link to sign-in page present
 - [ ] Unit test: renders form; shows 409 error; shows 400 field errors; calls signIn on success
 - [ ] Gate check passes: `npm run lint && npm run test:unit`
 
@@ -261,9 +261,9 @@ T7, T8, T9, T10 → T11
 
 **Done when**:
 
-- [ ] Page renders a visible placeholder (e.g., "Diagram Index — coming soon")
-- [ ] Accessible only when authenticated (middleware redirects otherwise)
-- [ ] Unauthenticated navigation to `/` redirects to `/sign-in`
+- [x] Page renders a visible placeholder (e.g., "Diagram Index — coming soon")
+- [x] Accessible only when authenticated (middleware redirects otherwise)
+- [x] Unauthenticated navigation to `/` redirects to `/sign-in`
 - [ ] Unit test: renders placeholder text
 - [ ] Gate check passes: `npm run lint && npm run test:unit`
 
@@ -282,13 +282,13 @@ T7, T8, T9, T10 → T11
 
 **Done when**:
 
-- [ ] Test: new user signs up → lands on Diagram Index placeholder
-- [ ] Test: existing user signs in → lands on Diagram Index placeholder
-- [ ] Test: signed-in user signs out → redirected to sign-in page
-- [ ] Test: unauthenticated user navigates to `/` → redirected to `/sign-in`
-- [ ] Test: already-authenticated user visits `/sign-in` → redirected to `/`
-- [ ] Tests use isolated user data per run (factory or unique email per test)
-- [ ] Gate check passes: `npm run test:e2e`
+- [x] Test: new user signs up → lands on Diagram Index placeholder
+- [x] Test: existing user signs in → lands on Diagram Index placeholder
+- [x] Test: signed-in user signs out → redirected to sign-in page
+- [x] Test: unauthenticated user navigates to `/` → redirected to `/sign-in`
+- [x] Test: already-authenticated user visits `/sign-in` → redirected to `/`
+- [x] Tests use isolated user data per run (unique email via `Date.now()` per test)
+- [ ] Gate check passes: `npm run test:e2e` (blocked: infra T6 Playwright config + T1-T4 DB)
 
 **Tests**: E2E
 **Gate**: full — `npm run lint && npm run test:unit && npm run test:integration && npm run test:e2e`
