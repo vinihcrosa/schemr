@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // AI tool directories (not project code)
+    ".claude/**",
+    ".codex/**",
+    ".agents/**",
   ]),
 ]);
 

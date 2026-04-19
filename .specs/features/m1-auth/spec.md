@@ -6,10 +6,10 @@ Schemr is a personal diagram workspace — every diagram belongs to a user. With
 
 ## Goals
 
-- [ ] Users can create an account and sign in
-- [ ] Sessions are persisted and protected across page navigation
-- [ ] All application routes are protected — unauthenticated users are redirected to sign in
-- [ ] `userId` is always derived server-side from the session (never from client input)
+- [x] Users can create an account and sign in
+- [x] Sessions are persisted and protected across page navigation
+- [x] All application routes are protected — unauthenticated users are redirected to sign in
+- [x] `userId` is always derived server-side from the session (never from client input)
 
 ## Out of Scope
 
@@ -120,18 +120,18 @@ Schemr is a personal diagram workspace — every diagram belongs to a user. With
 
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
-| AUTH-01 | P1: Sign up | Design | Pending |
-| AUTH-02 | P1: Sign in | Design | Pending |
-| AUTH-03 | P1: Protected routes | Design | Pending |
-| AUTH-04 | P1: Sign out | Design | Pending |
-| AUTH-05 | P1: Server-side session validation | Design | Pending |
+| AUTH-01 | P1: Sign up | Implementation | Complete |
+| AUTH-02 | P1: Sign in | Implementation | Complete |
+| AUTH-03 | P1: Protected routes | Implementation | Complete |
+| AUTH-04 | P1: Sign out | Implementation | Complete |
+| AUTH-05 | P1: Server-side session validation | Implementation | Complete |
 
 ---
 
 ## Success Criteria
 
-- [ ] New user can create an account and land on the Diagram Index
-- [ ] Returning user can sign in and access their session across navigations
-- [ ] Unauthenticated navigation to any app route redirects to sign in
-- [ ] `GET /api/me` returns session user — no client-provided identity accepted
-- [ ] Sign out destroys session and redirects to sign in
+- [x] New user can create an account and land on the Diagram Index
+- [x] Returning user can sign in and access their session across navigations
+- [x] Unauthenticated navigation to any app route redirects to sign in
+- [x] `GET /api/me` returns session user — no client-provided identity accepted
+- [x] Sign out destroys session and redirects to sign in

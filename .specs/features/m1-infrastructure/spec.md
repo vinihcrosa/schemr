@@ -6,10 +6,10 @@ The project needs a working foundation before any feature can be built or valida
 
 ## Goals
 
-- [ ] Local dev environment runs with a single command (`docker compose up`)
-- [ ] Prisma schema defined and migrations applied against local Postgres
+- [x] Local dev environment runs with a single command (`docker compose up`)
+- [x] Prisma schema defined and migrations applied against local Postgres
 - [ ] App deploys successfully to Vercel connected to the managed Postgres instance
-- [ ] Authenticated API roundtrip (`GET /api/me`) proves NextAuth + Prisma + Postgres are operational
+- [x] Authenticated API roundtrip (`GET /api/me`) proves NextAuth + Prisma + Postgres are operational
 
 ## Out of Scope
 
@@ -115,18 +115,18 @@ The project needs a working foundation before any feature can be built or valida
 
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
-| INFRA-01 | P1: Local dev with Docker | Design | Pending |
-| INFRA-02 | P1: Prisma schema — User model | Design | Pending |
-| INFRA-03 | P1: Prisma schema — Diagram model | Design | Pending |
-| INFRA-04 | P1: Environment configuration | Design | Pending |
+| INFRA-01 | P1: Local dev with Docker | Design | Complete |
+| INFRA-02 | P1: Prisma schema — User model | Design | Complete |
+| INFRA-03 | P1: Prisma schema — Diagram model | Design | Complete |
+| INFRA-04 | P1: Environment configuration | Design | Complete |
 | INFRA-05 | P1: Vercel deployment | Design | Pending |
-| INFRA-06 | P1: Foundation validation (GET /api/me) | Design | Pending |
+| INFRA-06 | P1: Foundation validation (GET /api/me) | Design | Complete |
 
 ---
 
 ## Success Criteria
 
-- [ ] `docker compose up` + `prisma migrate dev` runs without errors on a fresh clone
+- [x] `docker compose up` + `prisma migrate dev` runs without errors on a fresh clone
 - [ ] App deploys to Vercel and connects to managed Postgres
-- [ ] `GET /api/me` returns the authenticated user from the database
-- [ ] `.env.example` documents all required variables
+- [x] `GET /api/me` returns the authenticated user from the database
+- [x] `.env.example` documents all required variables

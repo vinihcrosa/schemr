@@ -1,7 +1,9 @@
 # M1 — Infrastructure Tasks
 
 **Design**: `.specs/features/m1-infrastructure/design.md`
-**Status**: Draft
+**Status**: Complete — T1–T8 done; T9 (Vercel deploy) manual/pending
+
+> **Prisma 7 note**: Prisma 7 changed the datasource configuration. `schema.prisma` no longer includes a `url` field in the datasource block. Instead, a `prisma.config.ts` file is required with `datasource.url` and `migrate.adapter` fields. The `@prisma/adapter-pg` and `pg` packages are required. `lib/db.ts` uses the `PrismaPg` adapter instead of a direct `PrismaClient` instantiation.
 
 ---
 
@@ -55,11 +57,11 @@ T9 depends on T8.
 
 **Done when**:
 
-- [ ] `docker compose up -d` starts Postgres on port `5433` without errors
-- [ ] Container uses `postgres:16-alpine` image
-- [ ] Credentials (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`) loaded from env
-- [ ] Named volume defined for data persistence between restarts
-- [ ] `docker compose down` stops the container cleanly
+- [x] `docker compose up -d` starts Postgres on port `5433` without errors
+- [x] Container uses `postgres:16-alpine` image
+- [x] Credentials (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`) loaded from env
+- [x] Named volume defined for data persistence between restarts
+- [x] `docker compose down` stops the container cleanly
 
 **Tests**: none
 **Gate**: manual — `docker compose up -d && docker compose ps`
@@ -76,10 +78,10 @@ T9 depends on T8.
 
 **Done when**:
 
-- [ ] `.env.example` lists all required variables with no values: `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
-- [ ] `.env.local` has working values pointing to Docker Postgres on port `5433`
-- [ ] `.env.local` is listed in `.gitignore`
-- [ ] `.env.example` is committed to the repo
+- [x] `.env.example` lists all required variables with no values: `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
+- [x] `.env.local` has working values pointing to Docker Postgres on port `5433`
+- [x] `.env.local` is listed in `.gitignore`
+- [x] `.env.example` is committed to the repo
 
 **Tests**: none
 **Gate**: manual — verify `.gitignore` excludes `.env.local`
@@ -96,11 +98,11 @@ T9 depends on T8.
 
 **Done when**:
 
-- [ ] `prisma/schema.prisma` defines `User` model: `id`, `email` (unique), `name?`, `password`, `diagrams`, `createdAt`
-- [ ] `prisma/schema.prisma` defines `Diagram` model: `id`, `name` (default "Untitled"), `data` (Json), `userId`, `user` (relation, onDelete: Cascade), `createdAt`, `updatedAt`
-- [ ] `npx prisma migrate dev --name init` completes without errors
-- [ ] Both tables exist in the local DB (verify via `npx prisma studio` or psql)
-- [ ] `prisma/migrations/` directory committed to repo
+- [x] `prisma/schema.prisma` defines `User` model: `id`, `email` (unique), `name?`, `password`, `diagrams`, `createdAt`
+- [x] `prisma/schema.prisma` defines `Diagram` model: `id`, `name` (default "Untitled"), `data` (Json), `userId`, `user` (relation, onDelete: Cascade), `createdAt`, `updatedAt`
+- [x] `npx prisma migrate dev --name init` completes without errors
+- [x] Both tables exist in the local DB (verify via `npx prisma studio` or psql)
+- [x] `prisma/migrations/` directory committed to repo
 
 **Tests**: none
 **Gate**: manual — `npx prisma migrate dev` exits 0
@@ -117,10 +119,10 @@ T9 depends on T8.
 
 **Done when**:
 
-- [ ] `lib/db.ts` exports `const db: PrismaClient`
-- [ ] Uses `globalThis.__prisma` to reuse existing instance in dev
-- [ ] TypeScript reports no errors on `import { db } from '@/lib/db'`
-- [ ] Gate check passes: `npm run lint && npm run test:unit`
+- [x] `lib/db.ts` exports `const db: PrismaClient`
+- [x] Uses `globalThis.__prisma` to reuse existing instance in dev
+- [x] TypeScript reports no errors on `import { db } from '@/lib/db'`
+- [x] Gate check passes: `npm run lint && npm run test:unit`
 
 **Tests**: unit
 **Gate**: quick — `npm run lint && npm run test:unit`
@@ -137,11 +139,11 @@ T9 depends on T8.
 
 **Done when**:
 
-- [ ] `vitest.config.ts` defines `project: unit` — matches `**/*.unit.test.ts`, no globalSetup, fast env
-- [ ] `vitest.config.ts` defines `project: integration` — matches `**/*.integration.test.ts`, uses `globalSetup`, restricted parallelism (`singleFork` or `maxConcurrency: 1`)
-- [ ] `package.json` scripts: `"test:unit": "vitest --project unit"`, `"test:integration": "vitest --project integration"`, `"test": "vitest"`
-- [ ] `npm run test:unit` runs (passes or no tests found — not errors) 
-- [ ] Gate check passes: `npm run lint && npm run test:unit`
+- [x] `vitest.config.ts` defines `project: unit` — matches `**/*.unit.test.ts`, no globalSetup, fast env
+- [x] `vitest.config.ts` defines `project: integration` — matches `**/*.integration.test.ts`, uses `globalSetup`, restricted parallelism (`singleFork` or `maxConcurrency: 1`)
+- [x] `package.json` scripts: `"test:unit": "vitest --project unit"`, `"test:integration": "vitest --project integration"`, `"test": "vitest"`
+- [x] `npm run test:unit` runs (passes or no tests found — not errors) 
+- [x] Gate check passes: `npm run lint && npm run test:unit`
 
 **Tests**: none
 **Gate**: quick — `npm run lint && npm run test:unit`
@@ -158,11 +160,11 @@ T9 depends on T8.
 
 **Done when**:
 
-- [ ] `playwright.config.ts` defines `webServer` using `next build && next start` command
-- [ ] Uses `TEST_DATABASE_URL` env var (separate test DB) when starting the app for E2E
-- [ ] `package.json` script: `"test:e2e": "playwright test"`
-- [ ] `npx playwright install` documented in project README or setup instructions
-- [ ] `npm run test:e2e` fails gracefully (no tests yet — not a config crash)
+- [x] `playwright.config.ts` defines `webServer` using `next build && next start` command
+- [x] Uses `TEST_DATABASE_URL` env var (separate test DB) when starting the app for E2E
+- [x] `package.json` script: `"test:e2e": "playwright test"`
+- [x] `npx playwright install` documented in project README or setup instructions
+- [x] `npm run test:e2e` fails gracefully (no tests yet — not a config crash)
 
 **Tests**: none
 **Gate**: manual — `npm run test:e2e` exits without config errors
@@ -179,11 +181,11 @@ T9 depends on T8.
 
 **Done when**:
 
-- [ ] `integration-setup.ts` runs `prisma migrate deploy` against `TEST_DATABASE_URL` on test start
-- [ ] `TEST_DATABASE_URL` points to `schemr_test` database (separate from `schemr_dev`)
-- [ ] Setup resets or recreates the test schema on each full run
-- [ ] `npm run test:integration` completes without DB connection errors (no integration tests yet — verifies setup only)
-- [ ] Gate check passes: `npm run test:integration`
+- [x] `integration-setup.ts` runs `prisma migrate deploy` against `TEST_DATABASE_URL` on test start
+- [x] `TEST_DATABASE_URL` points to `schemr_test` database (separate from `schemr_dev`)
+- [x] Setup resets or recreates the test schema on each full run
+- [x] `npm run test:integration` completes without DB connection errors (no integration tests yet — verifies setup only)
+- [x] Gate check passes: `npm run test:integration`
 
 **Tests**: none (this IS the test infrastructure)
 **Gate**: `npm run test:integration` — exits 0
@@ -200,11 +202,11 @@ T9 depends on T8.
 
 **Done when**:
 
-- [ ] `GET /api/me` returns `401` when no session exists
-- [ ] `GET /api/me` returns `{ id, email, name }` for authenticated user (queried from DB, not just session)
-- [ ] `userId` extracted from session — not from request params or body
-- [ ] Integration test covers: unauthenticated → 401, authenticated → user object from DB
-- [ ] Gate check passes: `npm run test:integration`
+- [x] `GET /api/me` returns `401` when no session exists
+- [x] `GET /api/me` returns `{ id, email, name }` for authenticated user (queried from DB, not just session)
+- [x] `userId` extracted from session — not from request params or body
+- [x] Integration test covers: unauthenticated → 401, authenticated → user object from DB
+- [x] Gate check passes: `npm run test:integration`
 
 **Tests**: integration
 **Gate**: full — `npm run lint && npm run test:unit && npm run test:integration`

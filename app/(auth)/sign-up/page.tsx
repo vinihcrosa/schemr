@@ -46,6 +46,8 @@ export default function SignUpPage() {
       }
 
       setError("Something went wrong, try again")
+    } catch {
+      setError("Something went wrong, try again")
     } finally {
       setPending(false)
     }
