@@ -1,7 +1,7 @@
 # M1 — Authentication Tasks
 
 **Design**: `.specs/features/m1-auth/design.md`
-**Status**: Draft
+**Status**: In Progress — Phase 1 complete
 
 **Cross-feature dependency**: All tasks here depend on m1-infrastructure T1–T4 being complete (Docker running, Prisma schema migrated, `lib/db.ts` available).
 
@@ -58,10 +58,10 @@ T7, T8, T9, T10 → T11
 
 **Done when**:
 
-- [ ] `Session` interface augmented with `user.id: string`
-- [ ] `JWT` interface augmented with `id: string`
-- [ ] Uses `DefaultSession["user"]` intersection — no fields duplicated
-- [ ] `tsconfig.json` includes `types/` in compilation (or `typeRoots` — verify)
+- [x] `Session` interface augmented with `user.id: string`
+- [x] `JWT` interface augmented with `id: string`
+- [x] Uses `DefaultSession["user"]` intersection — no fields duplicated
+- [x] `tsconfig.json` includes `types/` in compilation (via `**/*.ts` glob)
 - [ ] TypeScript reports no errors on `session.user.id` access in server code
 - [ ] Gate check passes: `npm run lint && npm run test:unit`
 
@@ -80,13 +80,13 @@ T7, T8, T9, T10 → T11
 
 **Done when**:
 
-- [ ] `auth.ts` exports `{ auth, signIn, signOut, handlers }` (NextAuth v5 API)
-- [ ] Credentials provider accepts `email` and `password`
-- [ ] `authorize()` finds user by email, runs `bcrypt.compare`, returns `null` on failure (never throws)
-- [ ] `jwt` callback: on sign-in, sets `token.id = user.id`
-- [ ] `session` callback: sets `session.user.id = token.id`
-- [ ] Strategy is `jwt` (no database adapter)
-- [ ] TypeScript reports no errors
+- [x] `auth.ts` exports `{ auth, signIn, signOut, handlers }` (NextAuth v5 API)
+- [x] Credentials provider accepts `email` and `password`
+- [x] `authorize()` finds user by email, runs `bcrypt.compare`, returns `null` on failure (never throws)
+- [x] `jwt` callback: on sign-in, sets `token.id = user.id`
+- [x] `session` callback: sets `session.user.id = token.id`
+- [x] Strategy is `jwt` (no database adapter)
+- [ ] TypeScript reports no errors (blocked: awaiting lib/db.ts from infra T4)
 - [ ] Gate check passes: `npm run lint && npm run test:unit`
 
 **Tests**: none (config file — tested indirectly via T5 integration tests)
@@ -104,9 +104,9 @@ T7, T8, T9, T10 → T11
 
 **Done when**:
 
-- [ ] `getSession()` wraps `auth()` and returns `Session | null`
-- [ ] `requireSession()` calls `getSession()` — returns `Session` or throws `NextResponse.json({ error: 'Unauthorized' }, { status: 401 })`
-- [ ] Return types use the augmented `Session` from `types/next-auth.d.ts`
+- [x] `getSession()` wraps `auth()` and returns `Session | null`
+- [x] `requireSession()` calls `getSession()` — returns `Session` or throws `NextResponse.json({ error: 'Unauthorized' }, { status: 401 })`
+- [x] Return types use the augmented `Session` from `types/next-auth.d.ts`
 - [ ] No direct calls to `auth()` exist outside this file in application code
 - [ ] Gate check passes: `npm run lint && npm run test:unit`
 
