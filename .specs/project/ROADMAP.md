@@ -21,7 +21,7 @@
 
 **Authentication** - PLANNED
 
-- Sign up / sign in via NextAuth.js (email+password or OAuth provider)
+- Sign up / sign in via NextAuth.js Credentials (email+password only)
 - Session management and protected routes
 - Server-side session validation on all protected routes
 - `userId` derived from session (never from client input)
@@ -113,6 +113,7 @@
 
 ## Future Considerations
 
+- OAuth providers (Google, GitHub) — post-MVP auth extension
 - Real-time collaboration (multi-user editing)
 - Version history / snapshot diffing
 - Diagram search by name or tag
