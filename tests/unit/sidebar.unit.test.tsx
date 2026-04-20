@@ -174,28 +174,28 @@ describe("DiagramSidebar", () => {
   })
 
   it("renders a SidebarItem for each diagram", () => {
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" />)
+    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
     expect(screen.getByText("Alpha")).toBeInTheDocument()
     expect(screen.getByText("Beta")).toBeInTheDocument()
   })
 
   it("current item has isCurrent=true (does not navigate on click)", async () => {
     const user = userEvent.setup()
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" />)
+    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
     await user.click(screen.getByText("Alpha"))
     expect(mockPush).not.toHaveBeenCalled()
   })
 
   it("non-current item navigates on click", async () => {
     const user = userEvent.setup()
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" />)
+    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
     await user.click(screen.getByText("Beta"))
     expect(mockPush).toHaveBeenCalledWith("/diagrams/d2")
   })
 
   it("toggle button collapses sidebar (list no longer rendered)", async () => {
     const user = userEvent.setup()
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" />)
+    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
     await user.click(screen.getByRole("button", { name: /collapse sidebar/i }))
     expect(screen.queryByText("Alpha")).not.toBeInTheDocument()
     expect(screen.queryByText("Beta")).not.toBeInTheDocument()
@@ -203,14 +203,14 @@ describe("DiagramSidebar", () => {
 
   it("toggle button expands sidebar again after collapse", async () => {
     const user = userEvent.setup()
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" />)
+    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
     await user.click(screen.getByRole("button", { name: /collapse sidebar/i }))
     await user.click(screen.getByRole("button", { name: /expand sidebar/i }))
     expect(screen.getByText("Alpha")).toBeInTheDocument()
   })
 
   it("new diagram button is present and enabled by default", () => {
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" />)
+    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
     const btn = screen.getByRole("button", { name: /new diagram/i })
     expect(btn).toBeInTheDocument()
     expect(btn).not.toBeDisabled()
@@ -224,7 +224,7 @@ describe("DiagramSidebar", () => {
         { status: 200 }
       )
     )
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" />)
+    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
     await user.click(screen.getByRole("button", { name: /new diagram/i }))
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/diagrams/d3"))
   })
@@ -234,7 +234,7 @@ describe("DiagramSidebar", () => {
     vi.mocked(global.fetch).mockResolvedValue(
       new Response(JSON.stringify({ id: "d2", name: "Renamed" }), { status: 200 })
     )
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" />)
+    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
     await user.click(screen.getByRole("button", { name: /rename beta/i }))
     const input = screen.getByRole("textbox", { name: /rename diagram/i })
     await user.clear(input)
@@ -247,7 +247,7 @@ describe("DiagramSidebar", () => {
   it("rename: reverts name on fetch failure", async () => {
     const user = userEvent.setup()
     vi.mocked(global.fetch).mockRejectedValue(new Error("network"))
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" />)
+    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
     await user.click(screen.getByRole("button", { name: /rename beta/i }))
     const input = screen.getByRole("textbox", { name: /rename diagram/i })
     await user.clear(input)
@@ -259,7 +259,7 @@ describe("DiagramSidebar", () => {
   it("delete: optimistically removes item", async () => {
     const user = userEvent.setup()
     vi.mocked(global.fetch).mockResolvedValue(new Response("{}", { status: 200 }))
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" />)
+    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
     await user.click(screen.getByRole("button", { name: /delete beta/i }))
     await user.click(screen.getByRole("button", { name: /confirm delete/i }))
     await waitFor(() => expect(screen.queryByText("Beta")).not.toBeInTheDocument())
@@ -268,7 +268,7 @@ describe("DiagramSidebar", () => {
   it("delete: re-inserts item on fetch failure", async () => {
     const user = userEvent.setup()
     vi.mocked(global.fetch).mockRejectedValue(new Error("network"))
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" />)
+    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
     await user.click(screen.getByRole("button", { name: /delete beta/i }))
     await user.click(screen.getByRole("button", { name: /confirm delete/i }))
     await waitFor(() => expect(screen.getByText("Beta")).toBeInTheDocument())
@@ -277,7 +277,7 @@ describe("DiagramSidebar", () => {
   it("delete current diagram: calls router.push to next", async () => {
     const user = userEvent.setup()
     vi.mocked(global.fetch).mockResolvedValue(new Response("{}", { status: 200 }))
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" />)
+    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
     await user.click(screen.getByRole("button", { name: /delete alpha/i }))
     await user.click(screen.getByRole("button", { name: /confirm delete/i }))
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/diagrams/d2"))
@@ -286,7 +286,7 @@ describe("DiagramSidebar", () => {
   it("delete last diagram: navigates to /", async () => {
     const user = userEvent.setup()
     vi.mocked(global.fetch).mockResolvedValue(new Response("{}", { status: 200 }))
-    render(<DiagramSidebar diagrams={[DIAGRAMS[0]]} currentId="d1" />)
+    render(<DiagramSidebar diagrams={[DIAGRAMS[0]]} currentId="d1" userName="Alice" />)
     await user.click(screen.getByRole("button", { name: /delete alpha/i }))
     await user.click(screen.getByRole("button", { name: /confirm delete/i }))
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/"))

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { SidebarItem } from "./SidebarItem"
+import { UserMenu } from "./UserMenu"
 
 type DiagramEntry = {
   id: string
@@ -13,9 +14,10 @@ type DiagramEntry = {
 type Props = {
   diagrams: DiagramEntry[]
   currentId: string
+  userName: string
 }
 
-export function DiagramSidebar({ diagrams, currentId }: Props) {
+export function DiagramSidebar({ diagrams, currentId, userName }: Props) {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [width, setWidth] = useState(220)
@@ -143,7 +145,7 @@ export function DiagramSidebar({ diagrams, currentId }: Props) {
   if (collapsed) {
     return (
       <div
-        className="flex flex-col items-center py-3 bg-zinc-900 border-r border-zinc-800"
+        className="flex flex-col items-center py-3 gap-3 bg-zinc-900 border-r border-zinc-800"
         style={{ width: 40, minWidth: 40 }}
         data-testid="sidebar-collapsed"
       >
@@ -156,6 +158,9 @@ export function DiagramSidebar({ diagrams, currentId }: Props) {
             <polyline points="9 18 15 12 9 6" />
           </svg>
         </button>
+        <div className="mt-auto">
+          <UserMenu name={userName} />
+        </div>
       </div>
     )
   }
@@ -208,6 +213,11 @@ export function DiagramSidebar({ diagrams, currentId }: Props) {
             onDelete={handleDelete}
           />
         ))}
+      </div>
+
+      {/* Footer */}
+      <div className="px-2 py-2 border-t border-zinc-800">
+        <UserMenu name={userName} />
       </div>
 
       {/* Drag handle */}

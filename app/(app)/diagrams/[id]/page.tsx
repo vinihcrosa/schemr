@@ -30,9 +30,11 @@ export default async function DiagramPage({
     updatedAt: d.updatedAt.toISOString(),
   }))
 
+  const userName = session!.user.name ?? session!.user.email ?? "?"
+
   return (
     <div className="flex h-screen w-screen overflow-hidden">
-      <DiagramSidebar diagrams={serialized} currentId={id} />
+      <DiagramSidebar diagrams={serialized} currentId={id} userName={userName} />
       <main className="flex-1 overflow-hidden">
         <ExcalidrawEditor initialData={diagram.data} diagramId={diagram.id} />
       </main>
