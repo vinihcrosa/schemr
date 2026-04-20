@@ -111,6 +111,49 @@
 
 ---
 
+---
+
+## M4 — Editor Sidebar
+
+**Goal:** Users can switch between diagrams, create new ones, and manage existing ones without leaving the editor — all from a persistent sidebar in the Excalidraw screen.
+**Target:** TBD
+
+### Features
+
+**Diagram Sidebar** - PLANNED
+
+- Persistent left sidebar visible while editing any diagram
+- Lists all user diagrams; current diagram highlighted
+- Click to switch to another diagram (navigate to `/diagrams/:id`)
+- Create new diagram from sidebar (POST → navigate to new diagram)
+- Rename and delete from sidebar (same behavior as M3 index)
+- Collapsible sidebar (toggle to reclaim canvas space)
+
+**Index page rework** - PLANNED
+
+- `/` redirects to the most recently edited diagram, or shows a minimal "no diagrams" screen if none exist
+- Full listing page at `/` is replaced by the sidebar; no separate index needed
+
+---
+
+## M5 — Folder Organization
+
+**Goal:** Users can organize diagrams into named folders (nested), with unorganized diagrams shown at root.
+**Target:** TBD
+
+### Features
+
+**Folder Management** - PLANNED
+
+- Create folders with a name
+- Nested folders (folders inside folders, arbitrary depth)
+- Move diagrams into folders
+- Diagrams not in any folder appear at root level
+- Rename and delete folders
+- Sidebar shows folder tree with expand/collapse
+
+---
+
 ## Future Considerations
 
 - OAuth providers (Google, GitHub) — post-MVP auth extension

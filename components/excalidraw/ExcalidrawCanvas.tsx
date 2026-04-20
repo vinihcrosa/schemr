@@ -34,20 +34,21 @@ export function ExcalidrawCanvas({ initialData, diagramId }: Props) {
     [schedulesSave]
   )
 
+  // Fallback for tab close / hard refresh — sendBeacon survives page unload.
+  // SPA navigation is handled inside useSaveStatus via keepalive fetch on unmount.
   useEffect(() => {
     const handleBeforeUnload = () => {
-      if (status === "pending" && typeof navigator !== "undefined") {
-        navigator.sendBeacon(
-          `/api/diagrams/${diagramId}`,
-          new Blob([JSON.stringify({ data: localStateRef.current })], {
-            type: "application/json",
-          })
-        )
-      }
+      if (typeof navigator === "undefined") return
+      navigator.sendBeacon(
+        `/api/diagrams/${diagramId}`,
+        new Blob([JSON.stringify({ data: localStateRef.current })], {
+          type: "application/json",
+        })
+      )
     }
     window.addEventListener("beforeunload", handleBeforeUnload)
     return () => window.removeEventListener("beforeunload", handleBeforeUnload)
-  }, [status, diagramId])
+  }, [diagramId])
 
   return (
     <div className="relative w-full h-full">

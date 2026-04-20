@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation"
 import { requireSession } from "@/lib/auth"
-import { getDiagramById } from "@/lib/diagrams"
+import { getDiagramById, listDiagrams } from "@/lib/diagrams"
 import { ExcalidrawEditor } from "@/components/excalidraw/ExcalidrawEditor"
+import { DiagramSidebar } from "@/components/sidebar/DiagramSidebar"
 
 export default async function DiagramPage({
   params,
@@ -16,18 +17,25 @@ export default async function DiagramPage({
   }
 
   const { id } = await params
-  const diagram = await getDiagramById(id, session!.user.id)
+  const [diagram, diagrams] = await Promise.all([
+    getDiagramById(id, session!.user.id),
+    listDiagrams(session!.user.id),
+  ])
 
   if (!diagram) notFound()
 
+  const serialized = diagrams.map((d) => ({
+    id: d.id,
+    name: d.name,
+    updatedAt: d.updatedAt.toISOString(),
+  }))
+
   return (
-    <main className="h-screen w-screen flex flex-col">
-      <div className="flex-1 overflow-hidden">
-        <ExcalidrawEditor
-          initialData={diagram.data}
-          diagramId={diagram.id}
-        />
-      </div>
-    </main>
+    <div className="flex h-screen w-screen overflow-hidden">
+      <DiagramSidebar diagrams={serialized} currentId={id} />
+      <main className="flex-1 overflow-hidden">
+        <ExcalidrawEditor initialData={diagram.data} diagramId={diagram.id} />
+      </main>
+    </div>
   )
 }

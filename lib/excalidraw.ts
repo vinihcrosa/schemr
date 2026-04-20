@@ -12,7 +12,7 @@ export type ExcalidrawState = {
 
 export const EMPTY_DIAGRAM: ExcalidrawState = {
   elements: [],
-  appState: { collaborators: new Map() },
+  appState: { collaborators: new Map(), theme: "dark" },
   files: {},
 }
 

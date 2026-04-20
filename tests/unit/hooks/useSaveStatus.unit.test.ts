@@ -123,7 +123,7 @@ describe("useSaveStatus", () => {
     expect(result.current.status).toBe("saved")
   })
 
-  it("cleanup on unmount prevents save after unmount", async () => {
+  it("unmount with pending state fires an immediate keepalive fetch", () => {
     mockFetch.mockResolvedValue({ ok: true })
     const { result, unmount } = renderHook(() =>
       useSaveStatus({ diagramId: "test-id", debounceMs: 500 })
@@ -132,9 +132,18 @@ describe("useSaveStatus", () => {
       result.current.schedulesSave(MOCK_DIAGRAM)
     })
     unmount()
-    await act(async () => {
-      vi.advanceTimersByTime(500)
-    })
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    expect(mockFetch).toHaveBeenCalledWith(
+      "/api/diagrams/test-id",
+      expect.objectContaining({ method: "PUT", keepalive: true })
+    )
+  })
+
+  it("unmount without pending state does not fire fetch", () => {
+    const { unmount } = renderHook(() =>
+      useSaveStatus({ diagramId: "test-id" })
+    )
+    unmount()
     expect(mockFetch).not.toHaveBeenCalled()
   })
 })
