@@ -41,7 +41,7 @@
 
 ### Features
 
-**Excalidraw Embed** - PLANNED
+**Excalidraw Embed** - SPECIFIED
 
 - Embed Excalidraw as the primary drawing interface
 - Initialize canvas with static/mock data
