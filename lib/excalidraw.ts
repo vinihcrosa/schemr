@@ -12,7 +12,7 @@ export type ExcalidrawState = {
 
 export const EMPTY_DIAGRAM: ExcalidrawState = {
   elements: [],
-  appState: {},
+  appState: { collaborators: new Map() },
   files: {},
 }
 
@@ -70,9 +70,16 @@ export function deserializeCanvas(data: unknown): ExcalidrawState {
     const d = data as Record<string, unknown>
     return {
       elements: (d.elements as ExcalidrawElement[]) ?? [],
-      appState: (typeof d.appState === "object" && d.appState !== null
-        ? d.appState
-        : {}) as Partial<AppState>,
+      appState: (() => {
+        const raw = (typeof d.appState === "object" && d.appState !== null
+          ? d.appState
+          : {}) as Record<string, unknown>
+        // collaborators must be a Map — JSON round-trip converts it to a plain object
+        if (!(raw.collaborators instanceof Map)) {
+          raw.collaborators = new Map()
+        }
+        return raw as Partial<AppState>
+      })(),
       files: (typeof d.files === "object" && d.files !== null
         ? d.files
         : {}) as BinaryFiles,

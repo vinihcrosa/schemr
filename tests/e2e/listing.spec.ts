@@ -14,16 +14,6 @@ async function signUp(page: Parameters<typeof test>[1]["page"], email: string) {
   await expect(page).toHaveURL("/")
 }
 
-async function createDiagramViaApi(
-  request: Parameters<typeof test>[1]["request"],
-  name: string
-): Promise<string> {
-  const res = await request.post("/api/diagrams", {
-    data: { name },
-  })
-  const body = await res.json()
-  return body.id
-}
 
 test("new user sees empty state on /", async ({ page }) => {
   const email = uniqueEmail()
