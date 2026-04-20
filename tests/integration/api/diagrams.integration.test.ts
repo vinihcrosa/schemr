@@ -220,6 +220,83 @@ describe("GET /api/diagrams/:id", () => {
   })
 })
 
+describe("DELETE /api/diagrams/:id", () => {
+  it("deletes own diagram and returns 200", async () => {
+    const { POST } = await getCollectionRoutes()
+    const createRes = await POST(
+      makeRequest("http://localhost/api/diagrams", "POST", {})
+    )
+    const created = await createRes.json()
+
+    const { DELETE } = await getMemberRoutes()
+    const res = await DELETE(
+      makeRequest(`http://localhost/api/diagrams/${created.id}`, "DELETE"),
+      { params: Promise.resolve({ id: created.id }) }
+    )
+    expect(res.status).toBe(200)
+
+    const record = await db.diagram.findFirst({ where: { id: created.id } })
+    expect(record).toBeNull()
+  })
+
+  it("returns 403 when diagram belongs to another user", async () => {
+    currentUserId = userB.id
+    const { POST } = await getCollectionRoutes()
+    const createRes = await POST(
+      makeRequest("http://localhost/api/diagrams", "POST", {})
+    )
+    const created = await createRes.json()
+
+    currentUserId = userA.id
+    const { DELETE } = await getMemberRoutes()
+    const res = await DELETE(
+      makeRequest(`http://localhost/api/diagrams/${created.id}`, "DELETE"),
+      { params: Promise.resolve({ id: created.id }) }
+    )
+    expect(res.status).toBe(403)
+
+    const record = await db.diagram.findFirst({ where: { id: created.id } })
+    expect(record).not.toBeNull()
+  })
+
+  it("returns 403 for non-existent id (opaque)", async () => {
+    const { DELETE } = await getMemberRoutes()
+    const res = await DELETE(
+      makeRequest("http://localhost/api/diagrams/nonexistent-id", "DELETE"),
+      { params: Promise.resolve({ id: "nonexistent-id" }) }
+    )
+    expect(res.status).toBe(403)
+  })
+
+  it("returns 401 when unauthenticated", async () => {
+    currentUserId = ""
+    const { DELETE } = await getMemberRoutes()
+    const res = await DELETE(
+      makeRequest("http://localhost/api/diagrams/any-id", "DELETE"),
+      { params: Promise.resolve({ id: "any-id" }) }
+    )
+    expect(res.status).toBe(401)
+  })
+
+  it("removed diagram no longer appears in GET /api/diagrams list", async () => {
+    const { POST, GET } = await getCollectionRoutes()
+    const createRes = await POST(
+      makeRequest("http://localhost/api/diagrams", "POST", { name: "To Delete" })
+    )
+    const created = await createRes.json()
+
+    const { DELETE } = await getMemberRoutes()
+    await DELETE(
+      makeRequest(`http://localhost/api/diagrams/${created.id}`, "DELETE"),
+      { params: Promise.resolve({ id: created.id }) }
+    )
+
+    const listRes = await GET(makeRequest("http://localhost/api/diagrams"))
+    const body = await listRes.json()
+    expect(body.every((d: { id: string }) => d.id !== created.id)).toBe(true)
+  })
+})
+
 describe("PUT /api/diagrams/:id", () => {
   it("updates data and updatedAt", async () => {
     const { POST } = await getCollectionRoutes()

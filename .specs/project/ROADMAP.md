@@ -97,14 +97,14 @@
 
 ### Features
 
-**Diagram Index** - PLANNED
+**Diagram Index** - SPECIFIED
 
 - List view with Diagram name + last updated timestamp
 - Empty state when no Diagrams exist yet
 - Click to open Diagram in editor
 - Create new Diagram from the index
 
-**Diagram Management (minimal)** - PLANNED
+**Diagram Management (minimal)** - SPECIFIED
 
 - Rename a Diagram
 - Delete a Diagram

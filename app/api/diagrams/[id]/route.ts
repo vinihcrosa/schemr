@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { requireSession } from "@/lib/auth"
-import { getDiagramById, updateDiagram } from "@/lib/diagrams"
+import { getDiagramById, updateDiagram, deleteDiagram } from "@/lib/diagrams"
 
 const UpdateDiagramSchema = z
   .object({
@@ -75,4 +75,25 @@ export async function PUT(
   }
 
   return NextResponse.json(diagram)
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  let session
+  try {
+    session = await requireSession()
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const { id } = await params
+  const deleted = await deleteDiagram(id, session.user.id)
+
+  if (!deleted) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
+  return NextResponse.json({})
 }

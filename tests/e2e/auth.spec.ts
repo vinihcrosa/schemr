@@ -15,7 +15,7 @@ test("new user signs up and lands on Diagram Index", async ({ page }) => {
   await page.getByRole("button", { name: "Create account" }).click()
 
   await expect(page).toHaveURL("/")
-  await expect(page.getByText("Diagram Index — coming soon")).toBeVisible()
+  await expect(page.getByText("Your Diagrams")).toBeVisible()
 })
 
 test("existing user signs in and lands on Diagram Index", async ({ page }) => {
@@ -38,7 +38,7 @@ test("existing user signs in and lands on Diagram Index", async ({ page }) => {
   await page.getByRole("button", { name: "Sign in" }).click()
 
   await expect(page).toHaveURL("/")
-  await expect(page.getByText("Diagram Index — coming soon")).toBeVisible()
+  await expect(page.getByText("Your Diagrams")).toBeVisible()
 })
 
 test("signed-in user signs out and is redirected to sign-in", async ({ page }) => {

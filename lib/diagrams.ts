@@ -56,6 +56,11 @@ export async function listDiagrams(userId: string): Promise<DiagramSummary[]> {
   return diagrams
 }
 
+export async function deleteDiagram(id: string, userId: string): Promise<boolean> {
+  const result = await db.diagram.deleteMany({ where: { id, userId } })
+  return result.count > 0
+}
+
 export async function updateDiagram(
   id: string,
   userId: string,
