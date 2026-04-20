@@ -8,7 +8,11 @@ import {
   type ExcalidrawState,
   type ExcalidrawElement,
 } from "@/lib/excalidraw"
-import type { AppState, BinaryFiles } from "@excalidraw/excalidraw/types"
+import type {
+  AppState,
+  BinaryFiles,
+  ExcalidrawInitialDataState,
+} from "@excalidraw/excalidraw/types"
 import { useSaveStatus } from "@/hooks/useSaveStatus"
 import { SaveIndicator } from "./SaveIndicator"
 
@@ -53,7 +57,7 @@ export function ExcalidrawCanvas({ initialData, diagramId }: Props) {
   return (
     <div className="relative w-full h-full">
       <Excalidraw
-        initialData={initialData}
+        initialData={initialData as unknown as ExcalidrawInitialDataState}
         onChange={
           handleChange as Parameters<typeof Excalidraw>[0]["onChange"]
         }

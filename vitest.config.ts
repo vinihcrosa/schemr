@@ -12,7 +12,6 @@ export default defineConfig({
   test: {
     projects: [
       {
-        name: "unit",
         plugins: [react()],
         resolve: {
           alias: {
@@ -28,7 +27,6 @@ export default defineConfig({
         },
       },
       {
-        name: "integration",
         resolve: {
           alias: {
             "@": resolve(__dirname, "."),
