@@ -12,7 +12,24 @@ model User {
   name      String?
   password  String
   diagrams  Diagram[]
+  folders   Folder[]
   createdAt DateTime  @default(now())
+}
+
+model Folder {
+  id             String    @id @default(cuid())
+  name           String    @default("New Folder")
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentFolderId String?
+  parent         Folder?   @relation("FolderChildren", fields: [parentFolderId], references: [id], onDelete: SetNull)
+  children       Folder[]  @relation("FolderChildren")
+  diagrams       Diagram[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([parentFolderId])
 }
 
 model Diagram {
@@ -21,6 +38,8 @@ model Diagram {
   data      Json
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folderId  String?
+  folder    Folder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
