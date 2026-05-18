@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useDraggable } from "@dnd-kit/core"
 
 type ItemMode = "idle" | "renaming" | "delete-pending"
 
@@ -18,6 +19,10 @@ export function SidebarItem({ id, name, isCurrent, onRename, onDelete }: Props) 
   const [mode, setMode] = useState<ItemMode>("idle")
   const [editValue, setEditValue] = useState(name)
   const inputRef = useRef<HTMLInputElement>(null)
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `diagram-${id}`,
+    data: { type: "diagram", id },
+  })
   const deleteTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -136,9 +141,20 @@ export function SidebarItem({ id, name, isCurrent, onRename, onDelete }: Props) 
         isCurrent
           ? "bg-zinc-700 text-zinc-100 font-medium cursor-default"
           : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 cursor-pointer",
+        isDragging ? "opacity-40" : "",
       ].join(" ")}
       aria-current={isCurrent ? "page" : undefined}
     >
+      <span
+        ref={setNodeRef}
+        {...listeners}
+        {...attributes}
+        className="opacity-0 group-hover:opacity-100 shrink-0 cursor-grab text-zinc-600 hover:text-zinc-400 px-0.5 select-none"
+        aria-label="Drag diagram"
+        onClick={(e) => e.stopPropagation()}
+      >
+        ⠿
+      </span>
       <span className="flex-1 truncate" title={name}>
         {name}
       </span>
