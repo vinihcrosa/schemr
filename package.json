@@ -11,7 +11,7 @@
     "test:unit": "vitest --project unit",
     "test:integration": "vitest --project integration",
     "test:e2e": "playwright test",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate && prisma migrate deploy"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
