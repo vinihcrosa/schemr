@@ -1,29 +1,59 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import { DndContext } from "@dnd-kit/core"
+import type { DragEndEvent } from "@dnd-kit/core"
 import { SidebarItem } from "./SidebarItem"
+import { SidebarFolderItem } from "./SidebarFolderItem"
 import { UserMenu } from "./UserMenu"
-
-type DiagramEntry = {
-  id: string
-  name: string
-  updatedAt: string
-}
+import {
+  buildSidebarTree,
+  isDescendant,
+  type SidebarData,
+  type FolderSummary,
+  type FolderNode,
+  type DiagramEntry,
+} from "@/lib/sidebar-tree"
 
 type Props = {
-  diagrams: DiagramEntry[]
+  initialData: SidebarData
   currentId: string
   userName: string
 }
 
-export function DiagramSidebar({ diagrams, currentId, userName }: Props) {
+function flattenFolders(nodes: FolderNode[]): FolderSummary[] {
+  return nodes.flatMap((n) => [
+    { id: n.id, name: n.name, parentFolderId: n.parentFolderId },
+    ...flattenFolders(n.children),
+  ])
+}
+
+function collectDiagrams(nodes: FolderNode[]): DiagramEntry[] {
+  return nodes.flatMap((n) => [...n.diagrams, ...collectDiagrams(n.children)])
+}
+
+export function DiagramSidebar({ initialData, currentId, userName }: Props) {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [width, setWidth] = useState(220)
-  const [items, setItems] = useState<DiagramEntry[]>(diagrams)
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState(false)
+
+  const [flatFolders, setFlatFolders] = useState<FolderSummary[]>(() =>
+    flattenFolders(initialData.folders)
+  )
+  const [flatDiagrams, setFlatDiagrams] = useState<DiagramEntry[]>(() => [
+    ...collectDiagrams(initialData.folders),
+    ...initialData.rootDiagrams,
+  ])
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
+  const [pendingNewFolderId, setPendingNewFolderId] = useState<string | null>(null)
+
+  const tree = useMemo(
+    () => buildSidebarTree(flatFolders, flatDiagrams),
+    [flatFolders, flatDiagrams]
+  )
 
   const widthRef = useRef(width)
   useEffect(() => {
@@ -36,12 +66,30 @@ export function DiagramSidebar({ diagrams, currentId, userName }: Props) {
     if (storedCollapsed !== null) setCollapsed(storedCollapsed === "true")
     const storedWidth = localStorage.getItem("schemr:sidebar:width")
     if (storedWidth !== null) setWidth(Number(storedWidth))
+    const storedExpanded = localStorage.getItem("schemr:sidebar:expanded")
+    if (storedExpanded) {
+      try {
+        setExpandedFolders(new Set(JSON.parse(storedExpanded)))
+      } catch {
+        // ignore malformed stored value
+      }
+    }
   }, [])
 
   function toggleCollapsed() {
     const next = !collapsed
     setCollapsed(next)
     localStorage.setItem("schemr:sidebar:collapsed", String(next))
+  }
+
+  function handleFolderToggle(id: string) {
+    setExpandedFolders((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      localStorage.setItem("schemr:sidebar:expanded", JSON.stringify([...next]))
+      return next
+    })
   }
 
   function startResize(e: React.MouseEvent) {
@@ -74,8 +122,9 @@ export function DiagramSidebar({ diagrams, currentId, userName }: Props) {
       id: "__optimistic__",
       name: `${hh}-${mm}-${dd}-${mo}-${aa}`,
       updatedAt: now.toISOString(),
+      folderId: null,
     }
-    setItems((prev) => [optimistic, ...prev])
+    setFlatDiagrams((prev) => [optimistic, ...prev])
     try {
       const res = await fetch("/api/diagrams", {
         method: "POST",
@@ -84,25 +133,93 @@ export function DiagramSidebar({ diagrams, currentId, userName }: Props) {
       })
       if (!res.ok) throw new Error("Failed")
       const diagram = await res.json()
-      setItems((prev) =>
+      setFlatDiagrams((prev) =>
         prev.map((item) =>
           item.id === "__optimistic__"
-            ? { id: diagram.id, name: diagram.name, updatedAt: diagram.updatedAt ?? optimistic.updatedAt }
+            ? {
+                id: diagram.id,
+                name: diagram.name,
+                updatedAt: diagram.updatedAt ?? optimistic.updatedAt,
+                folderId: null,
+              }
             : item
         )
       )
       router.push(`/diagrams/${diagram.id}`)
     } catch {
-      setItems((prev) => prev.filter((item) => item.id !== "__optimistic__"))
+      setFlatDiagrams((prev) => prev.filter((item) => item.id !== "__optimistic__"))
       setCreateError(true)
     } finally {
       setCreating(false)
     }
   }
 
-  async function handleRename(id: string, name: string) {
-    const prev = items.find((item) => item.id === id)
-    setItems((all) => all.map((item) => (item.id === id ? { ...item, name } : item)))
+  async function handleFolderCreate() {
+    const optimisticId = `__folder_opt_${Date.now()}__`
+    setFlatFolders((prev) => [
+      ...prev,
+      { id: optimisticId, name: "New Folder", parentFolderId: null },
+    ])
+    setPendingNewFolderId(optimisticId)
+    try {
+      const res = await fetch("/api/folders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "New Folder" }),
+      })
+      if (!res.ok) throw new Error("Failed")
+      const folder = await res.json()
+      setFlatFolders((prev) =>
+        prev.map((f) =>
+          f.id === optimisticId
+            ? { id: folder.id, name: folder.name, parentFolderId: null }
+            : f
+        )
+      )
+      setPendingNewFolderId(folder.id)
+    } catch {
+      setFlatFolders((prev) => prev.filter((f) => f.id !== optimisticId))
+      setPendingNewFolderId(null)
+    }
+  }
+
+  async function handleFolderRename(id: string, name: string) {
+    const prev = flatFolders.find((f) => f.id === id)
+    setFlatFolders((all) => all.map((f) => (f.id === id ? { ...f, name } : f)))
+    try {
+      const res = await fetch(`/api/folders/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      })
+      if (!res.ok) throw new Error("Failed")
+    } catch {
+      if (prev) {
+        setFlatFolders((all) => all.map((f) => (f.id === id ? { ...f, name: prev.name } : f)))
+      }
+    }
+  }
+
+  async function handleFolderDelete(id: string) {
+    const toRemove = new Set<string>()
+    function markDescendants(folderId: string) {
+      toRemove.add(folderId)
+      flatFolders
+        .filter((f) => f.parentFolderId === folderId)
+        .forEach((f) => markDescendants(f.id))
+    }
+    markDescendants(id)
+    setFlatFolders((prev) => prev.filter((f) => !toRemove.has(f.id)))
+    setFlatDiagrams((prev) =>
+      prev.map((d) => (d.folderId && toRemove.has(d.folderId) ? { ...d, folderId: null } : d))
+    )
+    if (pendingNewFolderId === id) setPendingNewFolderId(null)
+    await fetch(`/api/folders/${id}`, { method: "DELETE" })
+  }
+
+  async function handleDiagramRename(id: string, name: string) {
+    const prev = flatDiagrams.find((d) => d.id === id)
+    setFlatDiagrams((all) => all.map((d) => (d.id === id ? { ...d, name } : d)))
     try {
       const res = await fetch(`/api/diagrams/${id}`, {
         method: "PUT",
@@ -112,19 +229,17 @@ export function DiagramSidebar({ diagrams, currentId, userName }: Props) {
       if (!res.ok) throw new Error("Failed")
     } catch {
       if (prev) {
-        setItems((all) =>
-          all.map((item) => (item.id === id ? { ...item, name: prev.name } : item))
-        )
+        setFlatDiagrams((all) => all.map((d) => (d.id === id ? { ...d, name: prev.name } : d)))
       }
     }
   }
 
-  async function handleDelete(id: string) {
-    const index = items.findIndex((item) => item.id === id)
-    const nextItem = items.find((item) => item.id !== id) ?? null
+  async function handleDiagramDelete(id: string) {
+    const index = flatDiagrams.findIndex((d) => d.id === id)
+    const nextItem = flatDiagrams.find((d) => d.id !== id) ?? null
     const nextId = nextItem?.id ?? null
 
-    setItems((prev) => prev.filter((item) => item.id !== id))
+    setFlatDiagrams((prev) => prev.filter((d) => d.id !== id))
 
     try {
       const res = await fetch(`/api/diagrams/${id}`, { method: "DELETE" })
@@ -133,11 +248,51 @@ export function DiagramSidebar({ diagrams, currentId, userName }: Props) {
         router.push(nextId ? `/diagrams/${nextId}` : "/")
       }
     } catch {
-      setItems((prev) => {
+      setFlatDiagrams((prev) => {
         const next = [...prev]
-        const restored = diagrams.find((d) => d.id === id)
+        const allInitial = [
+          ...collectDiagrams(initialData.folders),
+          ...initialData.rootDiagrams,
+        ]
+        const restored = allInitial.find((d) => d.id === id)
         if (restored) next.splice(index, 0, restored)
         return next
+      })
+    }
+  }
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over) return
+    const activeData = active.data.current as { type: string; id: string } | undefined
+    const overData = over.data.current as { type: string; id: string } | undefined
+    if (!activeData || !overData) return
+
+    if (activeData.type === "diagram" && overData.type === "folder") {
+      const diagramId = activeData.id
+      const folderId = overData.id
+      setFlatDiagrams((prev) =>
+        prev.map((d) => (d.id === diagramId ? { ...d, folderId } : d))
+      )
+      await fetch(`/api/diagrams/${diagramId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folderId }),
+      })
+    }
+
+    if (activeData.type === "folder" && overData.type === "folder") {
+      const movingId = activeData.id
+      const targetId = overData.id
+      if (movingId === targetId) return
+      if (isDescendant(flatFolders, movingId, targetId)) return
+      setFlatFolders((prev) =>
+        prev.map((f) => (f.id === movingId ? { ...f, parentFolderId: targetId } : f))
+      )
+      await fetch(`/api/folders/${movingId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ parentFolderId: targetId }),
       })
     }
   }
@@ -154,7 +309,14 @@ export function DiagramSidebar({ diagrams, currentId, userName }: Props) {
           className="p-1 text-zinc-400 hover:text-zinc-200 transition-colors"
           aria-label="Expand sidebar"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <polyline points="9 18 15 12 9 6" />
           </svg>
         </button>
@@ -178,11 +340,37 @@ export function DiagramSidebar({ diagrams, currentId, userName }: Props) {
           className="p-1 text-zinc-400 hover:text-zinc-200 transition-colors"
           aria-label="Collapse sidebar"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
         <span className="flex-1 text-zinc-300 text-xs font-medium px-1">Schemr</span>
+        <button
+          onClick={handleFolderCreate}
+          className="p-1 text-zinc-400 hover:text-zinc-200 transition-colors"
+          aria-label="New folder"
+          title="New folder"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+            <line x1="12" y1="11" x2="12" y2="17" />
+            <line x1="9" y1="14" x2="15" y2="14" />
+          </svg>
+        </button>
         <button
           onClick={handleCreate}
           disabled={creating}
@@ -190,7 +378,14 @@ export function DiagramSidebar({ diagrams, currentId, userName }: Props) {
           aria-label="New diagram"
           title="New diagram"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
@@ -202,18 +397,35 @@ export function DiagramSidebar({ diagrams, currentId, userName }: Props) {
       )}
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto py-1 px-1">
-        {items.map((item) => (
-          <SidebarItem
-            key={item.id}
-            id={item.id}
-            name={item.name}
-            isCurrent={item.id === currentId}
-            onRename={handleRename}
-            onDelete={handleDelete}
-          />
-        ))}
-      </div>
+      <DndContext onDragEnd={handleDragEnd}>
+        <div className="flex-1 overflow-y-auto py-1 px-1">
+          {tree.folders.map((folder) => (
+            <SidebarFolderItem
+              key={folder.id}
+              folder={folder}
+              depth={0}
+              isExpanded={expandedFolders.has(folder.id)}
+              onToggle={handleFolderToggle}
+              onRename={handleFolderRename}
+              onDelete={handleFolderDelete}
+              onDiagramRename={handleDiagramRename}
+              onDiagramDelete={handleDiagramDelete}
+              currentDiagramId={currentId}
+              initialMode={pendingNewFolderId === folder.id ? "renaming" : "idle"}
+            />
+          ))}
+          {tree.rootDiagrams.map((item) => (
+            <SidebarItem
+              key={item.id}
+              id={item.id}
+              name={item.name}
+              isCurrent={item.id === currentId}
+              onRename={handleDiagramRename}
+              onDelete={handleDiagramDelete}
+            />
+          ))}
+        </div>
+      </DndContext>
 
       {/* Footer */}
       <div className="px-2 py-2 border-t border-zinc-800">

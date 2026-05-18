@@ -27,7 +27,7 @@ async function hasCircularRef(
     visited.add(current)
     if (current === folderId) return true
 
-    const row = await db.folder.findFirst({
+    const row: { parentFolderId: string | null } | null = await db.folder.findFirst({
       where: { id: current },
       select: { parentFolderId: true },
     })

@@ -25,6 +25,8 @@ const defaultProps = {
   onToggle: vi.fn(),
   onRename: vi.fn(),
   onDelete: vi.fn(),
+  onDiagramRename: vi.fn(),
+  onDiagramDelete: vi.fn(),
   currentDiagramId: "d99",
 }
 

@@ -3,6 +3,7 @@ import { render, screen, waitFor, act, fireEvent } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { SidebarItem } from "@/components/sidebar/SidebarItem"
 import { DiagramSidebar } from "@/components/sidebar/DiagramSidebar"
+import type { SidebarData } from "@/lib/sidebar-tree"
 
 const mockPush = vi.fn()
 
@@ -161,10 +162,28 @@ describe("SidebarItem", () => {
 
 // ─── DiagramSidebar ───────────────────────────────────────────────────────────
 
-const DIAGRAMS = [
-  { id: "d1", name: "Alpha", updatedAt: "2024-01-02T00:00:00.000Z" },
-  { id: "d2", name: "Beta", updatedAt: "2024-01-01T00:00:00.000Z" },
+const ROOT_DIAGRAMS = [
+  { id: "d1", name: "Alpha", updatedAt: "2024-01-02T00:00:00.000Z", folderId: null },
+  { id: "d2", name: "Beta", updatedAt: "2024-01-01T00:00:00.000Z", folderId: null },
 ]
+
+const SIDEBAR_DATA: SidebarData = {
+  folders: [],
+  rootDiagrams: ROOT_DIAGRAMS,
+}
+
+const SIDEBAR_DATA_WITH_FOLDER: SidebarData = {
+  folders: [
+    {
+      id: "f1",
+      name: "Work",
+      parentFolderId: null,
+      children: [],
+      diagrams: [{ id: "d3", name: "Gamma", updatedAt: "2024-01-03T00:00:00.000Z", folderId: "f1" }],
+    },
+  ],
+  rootDiagrams: ROOT_DIAGRAMS,
+}
 
 describe("DiagramSidebar", () => {
   beforeEach(() => {
@@ -173,29 +192,46 @@ describe("DiagramSidebar", () => {
     global.fetch = vi.fn()
   })
 
-  it("renders a SidebarItem for each diagram", () => {
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
+  it("renders root diagrams", () => {
+    render(<DiagramSidebar initialData={SIDEBAR_DATA} currentId="d1" userName="Alice" />)
     expect(screen.getByText("Alpha")).toBeInTheDocument()
     expect(screen.getByText("Beta")).toBeInTheDocument()
   })
 
+  it("renders folder item when folders exist", () => {
+    render(<DiagramSidebar initialData={SIDEBAR_DATA_WITH_FOLDER} currentId="d1" userName="Alice" />)
+    expect(screen.getByText("Work")).toBeInTheDocument()
+  })
+
+  it("folder content hidden when collapsed", () => {
+    render(<DiagramSidebar initialData={SIDEBAR_DATA_WITH_FOLDER} currentId="d1" userName="Alice" />)
+    expect(screen.queryByText("Gamma")).not.toBeInTheDocument()
+  })
+
+  it("folder content shown when expanded", async () => {
+    const user = userEvent.setup()
+    render(<DiagramSidebar initialData={SIDEBAR_DATA_WITH_FOLDER} currentId="d1" userName="Alice" />)
+    await user.click(screen.getByTestId("folder-row"))
+    expect(screen.getByText("Gamma")).toBeInTheDocument()
+  })
+
   it("current item has isCurrent=true (does not navigate on click)", async () => {
     const user = userEvent.setup()
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
+    render(<DiagramSidebar initialData={SIDEBAR_DATA} currentId="d1" userName="Alice" />)
     await user.click(screen.getByText("Alpha"))
     expect(mockPush).not.toHaveBeenCalled()
   })
 
   it("non-current item navigates on click", async () => {
     const user = userEvent.setup()
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
+    render(<DiagramSidebar initialData={SIDEBAR_DATA} currentId="d1" userName="Alice" />)
     await user.click(screen.getByText("Beta"))
     expect(mockPush).toHaveBeenCalledWith("/diagrams/d2")
   })
 
   it("toggle button collapses sidebar (list no longer rendered)", async () => {
     const user = userEvent.setup()
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
+    render(<DiagramSidebar initialData={SIDEBAR_DATA} currentId="d1" userName="Alice" />)
     await user.click(screen.getByRole("button", { name: /collapse sidebar/i }))
     expect(screen.queryByText("Alpha")).not.toBeInTheDocument()
     expect(screen.queryByText("Beta")).not.toBeInTheDocument()
@@ -203,17 +239,22 @@ describe("DiagramSidebar", () => {
 
   it("toggle button expands sidebar again after collapse", async () => {
     const user = userEvent.setup()
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
+    render(<DiagramSidebar initialData={SIDEBAR_DATA} currentId="d1" userName="Alice" />)
     await user.click(screen.getByRole("button", { name: /collapse sidebar/i }))
     await user.click(screen.getByRole("button", { name: /expand sidebar/i }))
     expect(screen.getByText("Alpha")).toBeInTheDocument()
   })
 
   it("new diagram button is present and enabled by default", () => {
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
+    render(<DiagramSidebar initialData={SIDEBAR_DATA} currentId="d1" userName="Alice" />)
     const btn = screen.getByRole("button", { name: /new diagram/i })
     expect(btn).toBeInTheDocument()
     expect(btn).not.toBeDisabled()
+  })
+
+  it("new folder button is present", () => {
+    render(<DiagramSidebar initialData={SIDEBAR_DATA} currentId="d1" userName="Alice" />)
+    expect(screen.getByRole("button", { name: /new folder/i })).toBeInTheDocument()
   })
 
   it("create: optimistically prepends new item and navigates", async () => {
@@ -224,17 +265,17 @@ describe("DiagramSidebar", () => {
         { status: 200 }
       )
     )
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
+    render(<DiagramSidebar initialData={SIDEBAR_DATA} currentId="d1" userName="Alice" />)
     await user.click(screen.getByRole("button", { name: /new diagram/i }))
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/diagrams/d3"))
   })
 
-  it("rename: optimistically updates name in list", async () => {
+  it("rename diagram: optimistically updates name in list", async () => {
     const user = userEvent.setup()
     vi.mocked(global.fetch).mockResolvedValue(
       new Response(JSON.stringify({ id: "d2", name: "Renamed" }), { status: 200 })
     )
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
+    render(<DiagramSidebar initialData={SIDEBAR_DATA} currentId="d1" userName="Alice" />)
     await user.click(screen.getByRole("button", { name: /rename beta/i }))
     const input = screen.getByRole("textbox", { name: /rename diagram/i })
     await user.clear(input)
@@ -244,10 +285,10 @@ describe("DiagramSidebar", () => {
     expect(screen.queryByText("Beta")).not.toBeInTheDocument()
   })
 
-  it("rename: reverts name on fetch failure", async () => {
+  it("rename diagram: reverts name on fetch failure", async () => {
     const user = userEvent.setup()
     vi.mocked(global.fetch).mockRejectedValue(new Error("network"))
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
+    render(<DiagramSidebar initialData={SIDEBAR_DATA} currentId="d1" userName="Alice" />)
     await user.click(screen.getByRole("button", { name: /rename beta/i }))
     const input = screen.getByRole("textbox", { name: /rename diagram/i })
     await user.clear(input)
@@ -256,19 +297,19 @@ describe("DiagramSidebar", () => {
     await waitFor(() => expect(screen.getByText("Beta")).toBeInTheDocument())
   })
 
-  it("delete: optimistically removes item", async () => {
+  it("delete diagram: optimistically removes item", async () => {
     const user = userEvent.setup()
     vi.mocked(global.fetch).mockResolvedValue(new Response("{}", { status: 200 }))
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
+    render(<DiagramSidebar initialData={SIDEBAR_DATA} currentId="d1" userName="Alice" />)
     await user.click(screen.getByRole("button", { name: /delete beta/i }))
     await user.click(screen.getByRole("button", { name: /confirm delete/i }))
     await waitFor(() => expect(screen.queryByText("Beta")).not.toBeInTheDocument())
   })
 
-  it("delete: re-inserts item on fetch failure", async () => {
+  it("delete diagram: re-inserts item on fetch failure", async () => {
     const user = userEvent.setup()
     vi.mocked(global.fetch).mockRejectedValue(new Error("network"))
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
+    render(<DiagramSidebar initialData={SIDEBAR_DATA} currentId="d1" userName="Alice" />)
     await user.click(screen.getByRole("button", { name: /delete beta/i }))
     await user.click(screen.getByRole("button", { name: /confirm delete/i }))
     await waitFor(() => expect(screen.getByText("Beta")).toBeInTheDocument())
@@ -277,7 +318,7 @@ describe("DiagramSidebar", () => {
   it("delete current diagram: calls router.push to next", async () => {
     const user = userEvent.setup()
     vi.mocked(global.fetch).mockResolvedValue(new Response("{}", { status: 200 }))
-    render(<DiagramSidebar diagrams={DIAGRAMS} currentId="d1" userName="Alice" />)
+    render(<DiagramSidebar initialData={SIDEBAR_DATA} currentId="d1" userName="Alice" />)
     await user.click(screen.getByRole("button", { name: /delete alpha/i }))
     await user.click(screen.getByRole("button", { name: /confirm delete/i }))
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/diagrams/d2"))
@@ -286,9 +327,34 @@ describe("DiagramSidebar", () => {
   it("delete last diagram: navigates to /", async () => {
     const user = userEvent.setup()
     vi.mocked(global.fetch).mockResolvedValue(new Response("{}", { status: 200 }))
-    render(<DiagramSidebar diagrams={[DIAGRAMS[0]]} currentId="d1" userName="Alice" />)
+    const singleDiagram: SidebarData = { folders: [], rootDiagrams: [ROOT_DIAGRAMS[0]] }
+    render(<DiagramSidebar initialData={singleDiagram} currentId="d1" userName="Alice" />)
     await user.click(screen.getByRole("button", { name: /delete alpha/i }))
     await user.click(screen.getByRole("button", { name: /confirm delete/i }))
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/"))
+  })
+
+  it("folder rename: optimistically updates folder name", async () => {
+    const user = userEvent.setup()
+    vi.mocked(global.fetch).mockResolvedValue(
+      new Response(JSON.stringify({ id: "f1", name: "Personal" }), { status: 200 })
+    )
+    render(<DiagramSidebar initialData={SIDEBAR_DATA_WITH_FOLDER} currentId="d1" userName="Alice" />)
+    await user.click(screen.getByRole("button", { name: /rename work/i }))
+    const input = screen.getByRole("textbox", { name: /rename folder/i })
+    await user.clear(input)
+    await user.type(input, "Personal")
+    await user.keyboard("{Enter}")
+    expect(screen.getByText("Personal")).toBeInTheDocument()
+    expect(screen.queryByText("Work")).not.toBeInTheDocument()
+  })
+
+  it("folder delete: removes folder from list", async () => {
+    const user = userEvent.setup()
+    vi.mocked(global.fetch).mockResolvedValue(new Response("{}", { status: 200 }))
+    render(<DiagramSidebar initialData={SIDEBAR_DATA_WITH_FOLDER} currentId="d1" userName="Alice" />)
+    await user.click(screen.getByRole("button", { name: /delete work/i }))
+    await user.click(screen.getByRole("button", { name: /confirm delete/i }))
+    await waitFor(() => expect(screen.queryByText("Work")).not.toBeInTheDocument())
   })
 })

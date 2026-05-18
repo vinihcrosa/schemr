@@ -38,6 +38,7 @@ export async function createDiagram(
     id: diagram.id,
     name: diagram.name,
     updatedAt: diagram.updatedAt,
+    folderId: diagram.folderId ?? null,
     data: deserializeCanvas(diagram.data),
   }
 }
@@ -54,6 +55,7 @@ export async function getDiagramById(
     id: diagram.id,
     name: diagram.name,
     updatedAt: diagram.updatedAt,
+    folderId: diagram.folderId ?? null,
     data: deserializeCanvas(diagram.data),
   }
 }
@@ -92,6 +94,7 @@ export async function updateDiagram(
     id: diagram.id,
     name: diagram.name,
     updatedAt: diagram.updatedAt,
+    folderId: diagram.folderId ?? null,
     data: deserializeCanvas(diagram.data),
   }
 }

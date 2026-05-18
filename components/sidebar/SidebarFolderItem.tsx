@@ -14,7 +14,11 @@ type Props = {
   onToggle: (id: string) => void
   onRename: (id: string, name: string) => void
   onDelete: (id: string) => void
+  onRenameCancel?: () => void
+  onDiagramRename: (id: string, name: string) => void
+  onDiagramDelete: (id: string) => void
   currentDiagramId: string
+  initialMode?: FolderMode
 }
 
 export function SidebarFolderItem({
@@ -24,9 +28,13 @@ export function SidebarFolderItem({
   onToggle,
   onRename,
   onDelete,
+  onRenameCancel,
+  onDiagramRename,
+  onDiagramDelete,
   currentDiagramId,
+  initialMode = "idle",
 }: Props) {
-  const [mode, setMode] = useState<FolderMode>("idle")
+  const [mode, setMode] = useState<FolderMode>(initialMode)
   const [editValue, setEditValue] = useState(folder.name)
   const inputRef = useRef<HTMLInputElement>(null)
   const deleteTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -74,6 +82,7 @@ export function SidebarFolderItem({
   function cancelRename() {
     setEditValue(folder.name)
     setMode("idle")
+    onRenameCancel?.()
   }
 
   function handleRenameKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -232,6 +241,8 @@ export function SidebarFolderItem({
               onToggle={onToggle}
               onRename={onRename}
               onDelete={onDelete}
+              onDiagramRename={onDiagramRename}
+              onDiagramDelete={onDiagramDelete}
               currentDiagramId={currentDiagramId}
             />
           ))}
@@ -241,8 +252,8 @@ export function SidebarFolderItem({
                 id={d.id}
                 name={d.name}
                 isCurrent={d.id === currentDiagramId}
-                onRename={() => {}}
-                onDelete={() => {}}
+                onRename={onDiagramRename}
+                onDelete={onDiagramDelete}
               />
             </div>
           ))}

@@ -143,14 +143,13 @@
 
 ### Features
 
-**Folder Management** - PLANNED
+**Folder Management** - SPECIFIED → [spec](../features/m5-folders/spec.md)
 
-- Create folders with a name
-- Nested folders (folders inside folders, arbitrary depth)
-- Move diagrams into folders
-- Diagrams not in any folder appear at root level
-- Rename and delete folders
-- Sidebar shows folder tree with expand/collapse
+- Create folders with a name (P1)
+- Sidebar shows folder tree with expand/collapse, root diagrams below folders (P1)
+- Rename and delete folders; delete moves diagrams to root — no cascade (P1)
+- Drag diagrams into folders or back to root (P1)
+- Nested folders via drag — unlimited depth with circular-ref prevention (P1)
 
 ---
 
