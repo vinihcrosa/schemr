@@ -365,4 +365,50 @@ describe("PUT /api/diagrams/:id", () => {
     )
     expect(res.status).toBe(401)
   })
+
+  it("moves diagram to folder when folderId provided", async () => {
+    const diagram = await db.diagram.create({
+      data: { userId: userA.id, name: "D", data: EMPTY_DIAGRAM as object },
+    })
+    const folder = await db.folder.create({ data: { userId: userA.id, name: "F" } })
+    const { PUT } = await getMemberRoutes()
+    const res = await PUT(
+      makeRequest(`http://localhost/api/diagrams/${diagram.id}`, "PUT", {
+        folderId: folder.id,
+      }),
+      { params: Promise.resolve({ id: diagram.id }) }
+    )
+    expect(res.status).toBe(200)
+    const d = await db.diagram.findFirst({ where: { id: diagram.id } })
+    expect(d?.folderId).toBe(folder.id)
+  })
+
+  it("moves diagram to root when folderId is null", async () => {
+    const folder = await db.folder.create({ data: { userId: userA.id, name: "F" } })
+    const diagram = await db.diagram.create({
+      data: { userId: userA.id, name: "D", data: EMPTY_DIAGRAM as object, folderId: folder.id },
+    })
+    const { PUT } = await getMemberRoutes()
+    const res = await PUT(
+      makeRequest(`http://localhost/api/diagrams/${diagram.id}`, "PUT", {
+        folderId: null,
+      }),
+      { params: Promise.resolve({ id: diagram.id }) }
+    )
+    expect(res.status).toBe(200)
+    const d = await db.diagram.findFirst({ where: { id: diagram.id } })
+    expect(d?.folderId).toBeNull()
+  })
+
+  it("returns 400 when body has none of name, data, or folderId", async () => {
+    const diagram = await db.diagram.create({
+      data: { userId: userA.id, name: "D", data: EMPTY_DIAGRAM as object },
+    })
+    const { PUT } = await getMemberRoutes()
+    const res = await PUT(
+      makeRequest(`http://localhost/api/diagrams/${diagram.id}`, "PUT", {}),
+      { params: Promise.resolve({ id: diagram.id }) }
+    )
+    expect(res.status).toBe(400)
+  })
 })

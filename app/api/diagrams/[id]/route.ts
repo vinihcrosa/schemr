@@ -6,6 +6,7 @@ import { getDiagramById, updateDiagram, deleteDiagram } from "@/lib/diagrams"
 const UpdateDiagramSchema = z
   .object({
     name: z.string().min(1).max(255).optional(),
+    folderId: z.string().nullable().optional(),
     data: z
       .object({
         elements: z.array(z.any()),
@@ -14,9 +15,10 @@ const UpdateDiagramSchema = z
       })
       .optional(),
   })
-  .refine((body) => body.name !== undefined || body.data !== undefined, {
-    message: "At least one of name or data is required",
-  })
+  .refine(
+    (body) => body.name !== undefined || body.data !== undefined || body.folderId !== undefined,
+    { message: "At least one of name, data, or folderId is required" }
+  )
 
 export async function GET(
   _req: NextRequest,
@@ -68,6 +70,7 @@ export async function PUT(
   const diagram = await updateDiagram(id, session.user.id, {
     name: parsed.data.name,
     data: parsed.data.data as Parameters<typeof updateDiagram>[2]["data"],
+    folderId: parsed.data.folderId,
   })
 
   if (!diagram) {
