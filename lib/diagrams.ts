@@ -74,13 +74,14 @@ export async function deleteDiagram(id: string, userId: string): Promise<boolean
 export async function updateDiagram(
   id: string,
   userId: string,
-  patch: { name?: string; data?: ExcalidrawState }
+  patch: { name?: string; data?: ExcalidrawState; folderId?: string | null }
 ): Promise<DiagramDetail | null> {
   const result = await db.diagram.updateMany({
     where: { id, userId },
     data: {
       ...(patch.name !== undefined ? { name: patch.name } : {}),
       ...(patch.data !== undefined ? { data: patch.data as object } : {}),
+      ...(patch.folderId !== undefined ? { folderId: patch.folderId } : {}),
     },
   })
   if (result.count === 0) return null
