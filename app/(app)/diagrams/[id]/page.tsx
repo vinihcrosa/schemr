@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { requireSession } from "@/lib/auth"
 import { getDiagramById, listDiagrams } from "@/lib/diagrams"
+import { listFolders } from "@/lib/folders"
 import { ExcalidrawEditor } from "@/components/excalidraw/ExcalidrawEditor"
 import { DiagramSidebar } from "@/components/sidebar/DiagramSidebar"
 
@@ -20,6 +21,7 @@ export default async function DiagramPage({
   const [diagram, diagrams] = await Promise.all([
     getDiagramById(id, session!.user.id),
     listDiagrams(session!.user.id),
+    listFolders(session!.user.id),
   ])
 
   if (!diagram) notFound()

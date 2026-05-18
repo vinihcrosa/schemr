@@ -15,6 +15,7 @@ export type DiagramSummary = {
   id: string
   name: string
   updatedAt: Date
+  folderId: string | null
 }
 
 export type DiagramDetail = DiagramSummary & {
@@ -60,7 +61,7 @@ export async function getDiagramById(
 export async function listDiagrams(userId: string): Promise<DiagramSummary[]> {
   const diagrams = await db.diagram.findMany({
     where: { userId },
-    select: { id: true, name: true, updatedAt: true },
+    select: { id: true, name: true, updatedAt: true, folderId: true },
     orderBy: { updatedAt: "desc" },
   })
   return diagrams
