@@ -1,9 +1,12 @@
+import type { TagSummary } from "@/lib/tags"
+
 export type DiagramEntry = {
   id: string
   name: string
   updatedAt: string
   folderId: string | null
   thumbnail?: string | null
+  tags?: TagSummary[]
 }
 
 export type FolderSummary = {

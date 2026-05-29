@@ -6,7 +6,11 @@ import { DndContext } from "@dnd-kit/core"
 import type { DragEndEvent } from "@dnd-kit/core"
 import { SidebarItem } from "./SidebarItem"
 import { SidebarFolderItem } from "./SidebarFolderItem"
+import { TagManager } from "./TagManager"
 import { UserMenu } from "./UserMenu"
+import { SearchInput } from "./SearchInput"
+import { TagFilter } from "./TagFilter"
+import type { TagSummary } from "@/lib/tags"
 import {
   buildSidebarTree,
   isDescendant,
@@ -20,6 +24,7 @@ type Props = {
   initialData: SidebarData
   currentId: string
   userName: string
+  initialTags?: TagSummary[]
 }
 
 function flattenFolders(nodes: FolderNode[]): FolderSummary[] {
@@ -33,7 +38,7 @@ function collectDiagrams(nodes: FolderNode[]): DiagramEntry[] {
   return nodes.flatMap((n) => [...n.diagrams, ...collectDiagrams(n.children)])
 }
 
-export function DiagramSidebar({ initialData, currentId, userName }: Props) {
+export function DiagramSidebar({ initialData, currentId, userName, initialTags }: Props) {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [width, setWidth] = useState(220)
@@ -50,10 +55,27 @@ export function DiagramSidebar({ initialData, currentId, userName }: Props) {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
   const [pendingNewFolderId, setPendingNewFolderId] = useState<string | null>(null)
 
+  const [searchQuery, setSearchQuery] = useState("")
+  const [activeTagId, setActiveTagId] = useState<string | null>(null)
+  const [tags, setTags] = useState<TagSummary[]>(initialTags ?? [])
+  const [tagManagerOpen, setTagManagerOpen] = useState(false)
+
   const tree = useMemo(
     () => buildSidebarTree(flatFolders, flatDiagrams),
     [flatFolders, flatDiagrams]
   )
+
+  const isFiltering = Boolean(searchQuery.trim() || activeTagId)
+  const filteredDiagrams = useMemo(() => {
+    if (!isFiltering) return []
+    const q = searchQuery.trim().toLowerCase()
+    return flatDiagrams
+      .filter(d => !q || d.name.toLowerCase().includes(q))
+      .filter(d => {
+        if (!activeTagId) return true
+        return d.tags?.some(t => t.id === activeTagId) ?? false
+      })
+  }, [flatDiagrams, searchQuery, activeTagId])
 
   const widthRef = useRef(width)
   useEffect(() => {
@@ -261,6 +283,75 @@ export function DiagramSidebar({ initialData, currentId, userName }: Props) {
     }
   }
 
+  async function handleCreateTag(name: string) {
+    const res = await fetch("/api/tags", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body?.error ?? "Failed to create tag")
+    }
+    const tag: TagSummary = await res.json()
+    setTags((prev) => [...prev, tag].sort((a, b) => a.name.localeCompare(b.name)))
+  }
+
+  async function handleDeleteTag(tagId: string) {
+    const prevTags = tags
+    const prevDiagrams = flatDiagrams
+    setTags((prev) => prev.filter((t) => t.id !== tagId))
+    setFlatDiagrams((prev) =>
+      prev.map((d) => {
+        if (!d.tags) return d
+        return { ...d, tags: d.tags.filter((t) => t.id !== tagId) }
+      })
+    )
+    try {
+      const res = await fetch(`/api/tags/${tagId}`, { method: "DELETE" })
+      if (!res.ok) throw new Error("Failed")
+    } catch {
+      setTags(prevTags)
+      setFlatDiagrams(prevDiagrams)
+    }
+  }
+
+  async function handleAssignTag(diagramId: string, tagId: string) {
+    const tag = tags.find((t) => t.id === tagId)
+    if (!tag) return
+    const prevDiagrams = flatDiagrams
+    setFlatDiagrams((prev) =>
+      prev.map((d) => {
+        if (d.id !== diagramId) return d
+        const existing = d.tags ?? []
+        if (existing.some((t) => t.id === tagId)) return d
+        return { ...d, tags: [...existing, tag] }
+      })
+    )
+    try {
+      const res = await fetch(`/api/diagrams/${diagramId}/tags/${tagId}`, { method: "POST" })
+      if (!res.ok) throw new Error("Failed")
+    } catch {
+      setFlatDiagrams(prevDiagrams)
+    }
+  }
+
+  async function handleRemoveTag(diagramId: string, tagId: string) {
+    const prevDiagrams = flatDiagrams
+    setFlatDiagrams((prev) =>
+      prev.map((d) => {
+        if (d.id !== diagramId) return d
+        return { ...d, tags: (d.tags ?? []).filter((t) => t.id !== tagId) }
+      })
+    )
+    try {
+      const res = await fetch(`/api/diagrams/${diagramId}/tags/${tagId}`, { method: "DELETE" })
+      if (!res.ok) throw new Error("Failed")
+    } catch {
+      setFlatDiagrams(prevDiagrams)
+    }
+  }
+
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (!over) return
@@ -353,6 +444,24 @@ export function DiagramSidebar({ initialData, currentId, userName }: Props) {
         </button>
         <span className="flex-1 text-zinc-300 text-xs font-medium px-1">Schemr</span>
         <button
+          onClick={() => setTagManagerOpen(true)}
+          className="p-1 text-zinc-400 hover:text-zinc-200 transition-colors"
+          aria-label="Manage tags"
+          title="Manage tags"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+            <line x1="7" y1="7" x2="7.01" y2="7" />
+          </svg>
+        </button>
+        <button
           onClick={handleFolderCreate}
           className="p-1 text-zinc-400 hover:text-zinc-200 transition-colors"
           aria-label="New folder"
@@ -392,39 +501,84 @@ export function DiagramSidebar({ initialData, currentId, userName }: Props) {
         </button>
       </div>
 
+      {tagManagerOpen && (
+        <TagManager
+          tags={tags}
+          onCreate={handleCreateTag}
+          onDelete={handleDeleteTag}
+          onClose={() => setTagManagerOpen(false)}
+        />
+      )}
+
       {createError && (
         <p className="px-3 py-1 text-red-400 text-xs">Could not create diagram.</p>
       )}
 
+      {!collapsed && <SearchInput value={searchQuery} onChange={setSearchQuery} onClear={() => setSearchQuery("")} />}
+      {!collapsed && <TagFilter tags={tags} activeTagId={activeTagId} onSelect={setActiveTagId} />}
+
       {/* List */}
       <DndContext onDragEnd={handleDragEnd}>
         <div className="flex-1 overflow-y-auto py-1 px-1">
-          {tree.folders.map((folder) => (
-            <SidebarFolderItem
-              key={folder.id}
-              folder={folder}
-              depth={0}
-              isExpanded={expandedFolders.has(folder.id)}
-              onToggle={handleFolderToggle}
-              onRename={handleFolderRename}
-              onDelete={handleFolderDelete}
-              onDiagramRename={handleDiagramRename}
-              onDiagramDelete={handleDiagramDelete}
-              currentDiagramId={currentId}
-              initialMode={pendingNewFolderId === folder.id ? "renaming" : "idle"}
-            />
-          ))}
-          {tree.rootDiagrams.map((item) => (
-            <SidebarItem
-              key={item.id}
-              id={item.id}
-              name={item.name}
-              isCurrent={item.id === currentId}
-              thumbnail={item.thumbnail}
-              onRename={handleDiagramRename}
-              onDelete={handleDiagramDelete}
-            />
-          ))}
+          {isFiltering ? (
+            filteredDiagrams.length === 0 ? (
+              <div className="px-3 py-4 text-xs text-slate-500">No diagrams match</div>
+            ) : (
+              <div>
+                {filteredDiagrams.map(d => (
+                  <SidebarItem
+                    key={d.id}
+                    id={d.id}
+                    name={d.name}
+                    isCurrent={d.id === currentId}
+                    thumbnail={d.thumbnail}
+                    onRename={handleDiagramRename}
+                    onDelete={handleDiagramDelete}
+                    tags={d.tags}
+                    allTags={tags}
+                    onTagAssign={(tagId) => handleAssignTag(d.id, tagId)}
+                    onTagRemove={(tagId) => handleRemoveTag(d.id, tagId)}
+                  />
+                ))}
+              </div>
+            )
+          ) : (
+            <>
+              {tree.folders.map((folder) => (
+                <SidebarFolderItem
+                  key={folder.id}
+                  folder={folder}
+                  depth={0}
+                  isExpanded={expandedFolders.has(folder.id)}
+                  onToggle={handleFolderToggle}
+                  onRename={handleFolderRename}
+                  onDelete={handleFolderDelete}
+                  onDiagramRename={handleDiagramRename}
+                  onDiagramDelete={handleDiagramDelete}
+                  onDiagramTagAssign={handleAssignTag}
+                  onDiagramTagRemove={handleRemoveTag}
+                  allTags={tags}
+                  currentDiagramId={currentId}
+                  initialMode={pendingNewFolderId === folder.id ? "renaming" : "idle"}
+                />
+              ))}
+              {tree.rootDiagrams.map((item) => (
+                <SidebarItem
+                  key={item.id}
+                  id={item.id}
+                  name={item.name}
+                  isCurrent={item.id === currentId}
+                  thumbnail={item.thumbnail}
+                  onRename={handleDiagramRename}
+                  onDelete={handleDiagramDelete}
+                  tags={item.tags}
+                  allTags={tags}
+                  onTagAssign={(tagId) => handleAssignTag(item.id, tagId)}
+                  onTagRemove={(tagId) => handleRemoveTag(item.id, tagId)}
+                />
+              ))}
+            </>
+          )}
         </div>
       </DndContext>
 

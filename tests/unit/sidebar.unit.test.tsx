@@ -358,3 +358,91 @@ describe("DiagramSidebar", () => {
     await waitFor(() => expect(screen.queryByText("Work")).not.toBeInTheDocument())
   })
 })
+
+// ─── SidebarItem tag section ──────────────────────────────────────────────────
+
+const TAG_A = { id: "t1", name: "frontend" }
+const TAG_B = { id: "t2", name: "backend" }
+
+describe("SidebarItem tag section", () => {
+  const onRename = vi.fn()
+  const onDelete = vi.fn()
+  const onTagAssign = vi.fn().mockResolvedValue(undefined)
+  const onTagRemove = vi.fn().mockResolvedValue(undefined)
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("non-current item: no tags section rendered", () => {
+    render(
+      <SidebarItem
+        id="d1"
+        name="Alpha"
+        isCurrent={false}
+        onRename={onRename}
+        onDelete={onDelete}
+        tags={[TAG_A]}
+        allTags={[TAG_A, TAG_B]}
+        onTagAssign={onTagAssign}
+        onTagRemove={onTagRemove}
+      />
+    )
+    expect(screen.queryByText("frontend")).not.toBeInTheDocument()
+    expect(screen.queryByText("+ Add tag")).not.toBeInTheDocument()
+  })
+
+  it("current item with tags: chips shown", () => {
+    render(
+      <SidebarItem
+        id="d1"
+        name="Alpha"
+        isCurrent
+        onRename={onRename}
+        onDelete={onDelete}
+        tags={[TAG_A, TAG_B]}
+        allTags={[TAG_A, TAG_B]}
+        onTagAssign={onTagAssign}
+        onTagRemove={onTagRemove}
+      />
+    )
+    expect(screen.getByText("frontend")).toBeInTheDocument()
+    expect(screen.getByText("backend")).toBeInTheDocument()
+  })
+
+  it("current item: Add tag button shown when allTags provided", () => {
+    render(
+      <SidebarItem
+        id="d1"
+        name="Alpha"
+        isCurrent
+        onRename={onRename}
+        onDelete={onDelete}
+        tags={[]}
+        allTags={[TAG_A]}
+        onTagAssign={onTagAssign}
+        onTagRemove={onTagRemove}
+      />
+    )
+    expect(screen.getByText("+ Add tag")).toBeInTheDocument()
+  })
+
+  it("clicking Add tag: TagPicker appears", async () => {
+    const user = userEvent.setup()
+    render(
+      <SidebarItem
+        id="d1"
+        name="Alpha"
+        isCurrent
+        onRename={onRename}
+        onDelete={onDelete}
+        tags={[]}
+        allTags={[TAG_A, TAG_B]}
+        onTagAssign={onTagAssign}
+        onTagRemove={onTagRemove}
+      />
+    )
+    await user.click(screen.getByText("+ Add tag"))
+    expect(screen.getByRole("listbox", { name: /tag picker/i })).toBeInTheDocument()
+  })
+})

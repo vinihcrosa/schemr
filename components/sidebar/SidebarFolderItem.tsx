@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { useDraggable, useDroppable } from "@dnd-kit/core"
 import { SidebarItem } from "./SidebarItem"
 import type { FolderNode } from "@/lib/sidebar-tree"
+import type { TagSummary } from "@/lib/tags"
 
 type FolderMode = "idle" | "renaming" | "delete-pending"
 
@@ -17,6 +18,9 @@ type Props = {
   onRenameCancel?: () => void
   onDiagramRename: (id: string, name: string) => void
   onDiagramDelete: (id: string) => void
+  onDiagramTagAssign?: (diagramId: string, tagId: string) => Promise<void>
+  onDiagramTagRemove?: (diagramId: string, tagId: string) => Promise<void>
+  allTags?: TagSummary[]
   currentDiagramId: string
   initialMode?: FolderMode
 }
@@ -31,6 +35,9 @@ export function SidebarFolderItem({
   onRenameCancel,
   onDiagramRename,
   onDiagramDelete,
+  onDiagramTagAssign,
+  onDiagramTagRemove,
+  allTags,
   currentDiagramId,
   initialMode = "idle",
 }: Props) {
@@ -243,6 +250,9 @@ export function SidebarFolderItem({
               onDelete={onDelete}
               onDiagramRename={onDiagramRename}
               onDiagramDelete={onDiagramDelete}
+              onDiagramTagAssign={onDiagramTagAssign}
+              onDiagramTagRemove={onDiagramTagRemove}
+              allTags={allTags}
               currentDiagramId={currentDiagramId}
             />
           ))}
@@ -255,6 +265,10 @@ export function SidebarFolderItem({
                 thumbnail={d.thumbnail}
                 onRename={onDiagramRename}
                 onDelete={onDiagramDelete}
+                tags={d.tags}
+                allTags={allTags}
+                onTagAssign={onDiagramTagAssign ? (tagId) => onDiagramTagAssign(d.id, tagId) : undefined}
+                onTagRemove={onDiagramTagRemove ? (tagId) => onDiagramTagRemove(d.id, tagId) : undefined}
               />
             </div>
           ))}
