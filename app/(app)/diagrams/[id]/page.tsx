@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import { requireSession } from "@/lib/auth"
 import { getDiagramById, listDiagrams } from "@/lib/diagrams"
 import { listFolders } from "@/lib/folders"
+import { listTags } from "@/lib/tags"
 import { buildSidebarTree } from "@/lib/sidebar-tree"
 import { ExcalidrawEditor } from "@/components/excalidraw/ExcalidrawEditor"
 import { DiagramSidebar } from "@/components/sidebar/DiagramSidebar"
@@ -19,10 +20,11 @@ export default async function DiagramPage({
   }
 
   const { id } = await params
-  const [diagram, diagrams, folders] = await Promise.all([
+  const [diagram, diagrams, folders, tags] = await Promise.all([
     getDiagramById(id, session!.user.id),
     listDiagrams(session!.user.id),
     listFolders(session!.user.id),
+    listTags(session!.user.id),
   ])
 
   if (!diagram) notFound()
@@ -47,7 +49,7 @@ export default async function DiagramPage({
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
-      <DiagramSidebar initialData={sidebarData} currentId={id} userName={userName} />
+      <DiagramSidebar initialData={sidebarData} currentId={id} userName={userName} initialTags={tags} />
       <main className="flex-1 overflow-hidden">
         <ExcalidrawEditor initialData={diagram.data} diagramId={diagram.id} />
       </main>

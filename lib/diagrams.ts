@@ -1,5 +1,6 @@
 import { db } from "@/lib/db"
 import { deserializeCanvas, EMPTY_DIAGRAM, type ExcalidrawState } from "@/lib/excalidraw"
+import type { TagSummary } from "@/lib/tags"
 
 function defaultDiagramName(): string {
   const now = new Date()
@@ -17,6 +18,7 @@ export type DiagramSummary = {
   updatedAt: Date
   folderId: string | null
   thumbnail: string | null
+  tags: TagSummary[]
 }
 
 export type DiagramDetail = DiagramSummary & {
@@ -41,6 +43,7 @@ export async function createDiagram(
     updatedAt: diagram.updatedAt,
     folderId: diagram.folderId ?? null,
     thumbnail: diagram.thumbnail ?? null,
+    tags: [],
     data: deserializeCanvas(diagram.data),
   }
 }
@@ -59,6 +62,7 @@ export async function getDiagramById(
     updatedAt: diagram.updatedAt,
     folderId: diagram.folderId ?? null,
     thumbnail: diagram.thumbnail ?? null,
+    tags: [],
     data: deserializeCanvas(diagram.data),
   }
 }
@@ -66,10 +70,25 @@ export async function getDiagramById(
 export async function listDiagrams(userId: string): Promise<DiagramSummary[]> {
   const diagrams = await db.diagram.findMany({
     where: { userId },
-    select: { id: true, name: true, updatedAt: true, folderId: true, thumbnail: true },
+    select: {
+      id: true,
+      name: true,
+      updatedAt: true,
+      folderId: true,
+      thumbnail: true,
+      tags: {
+        select: {
+          tag: { select: { id: true, name: true } }
+        }
+      }
+    },
     orderBy: { updatedAt: "desc" },
   })
-  return diagrams.map((d) => ({ ...d, thumbnail: d.thumbnail ?? null }))
+  return diagrams.map(({ tags, thumbnail, ...rest }) => ({
+    ...rest,
+    thumbnail: thumbnail ?? null,
+    tags: (tags as Array<{ tag: { id: string; name: string } }>).map((dt) => dt.tag),
+  }))
 }
 
 export async function deleteDiagram(id: string, userId: string): Promise<boolean> {
@@ -100,6 +119,7 @@ export async function updateDiagram(
     updatedAt: diagram.updatedAt,
     folderId: diagram.folderId ?? null,
     thumbnail: diagram.thumbnail ?? null,
+    tags: [],
     data: deserializeCanvas(diagram.data),
   }
 }
