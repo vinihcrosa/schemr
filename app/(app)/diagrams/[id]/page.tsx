@@ -35,6 +35,7 @@ export default async function DiagramPage({
     updatedAt: d.updatedAt.toISOString(),
     folderId: d.folderId,
     thumbnail: d.thumbnail,
+    tags: d.tags,
   }))
 
   const folderSummaries = folders.map((f) => ({

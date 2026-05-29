@@ -219,7 +219,7 @@ export function SidebarItem({ id, name, isCurrent, thumbnail, onRename, onDelete
       </div>
 
       {isCurrent && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", padding: "0 8px 4px" }}>
+        <div className="flex flex-wrap gap-1 px-2 pb-1">
           {(tags ?? []).map(tag => (
             <TagChip key={tag.id} name={tag.name} onRemove={() => onTagRemove?.(tag.id)} />
           ))}

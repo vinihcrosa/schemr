@@ -45,7 +45,10 @@ export async function removeTag(
   diagramId: string,
   tagId: string
 ): Promise<void> {
-  const diagram = await db.diagram.findFirst({ where: { id: diagramId, userId } })
-  if (!diagram) throw new Error("not found")
+  const [diagram, tag] = await Promise.all([
+    db.diagram.findFirst({ where: { id: diagramId, userId } }),
+    db.tag.findFirst({ where: { id: tagId, userId } }),
+  ])
+  if (!diagram || !tag) throw new Error("not found")
   await db.diagramTag.deleteMany({ where: { diagramId, tagId } })
 }

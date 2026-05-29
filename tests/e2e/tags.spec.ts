@@ -1,30 +1,7 @@
 // E2E tests require: npm run build and npm start. Run: npm run test:e2e
 
 import { test, expect } from "@playwright/test"
-
-const PASSWORD = "password123"
-
-function uniqueEmail() {
-  return `test+${Date.now()}+${Math.random().toString(36).slice(2)}@example.com`
-}
-
-async function signUp(page: Parameters<typeof test>[1]["page"], email: string) {
-  await page.goto("/sign-up")
-  await page.getByLabel("Email").fill(email)
-  await page.getByLabel("Password").fill(PASSWORD)
-  await page.getByRole("button", { name: "Create account" }).click()
-  await expect(page).toHaveURL("/")
-}
-
-async function createDiagram(page: Parameters<typeof test>[1]["page"]) {
-  const btn = page.getByRole("button", { name: /create your first diagram|new diagram/i })
-  await btn.click()
-  await expect(page).toHaveURL(/\/diagrams\//)
-}
-
-async function openTagManager(page: Parameters<typeof test>[1]["page"]) {
-  await page.getByLabel("Manage tags").click()
-}
+import { uniqueEmail, signUp, createDiagram, openTagManager } from "./helpers"
 
 async function createTagInManager(page: Parameters<typeof test>[1]["page"], name: string) {
   const input = page.getByRole("textbox", { name: /tag name/i })

@@ -73,10 +73,9 @@ export function DiagramSidebar({ initialData, currentId, userName, initialTags }
       .filter(d => !q || d.name.toLowerCase().includes(q))
       .filter(d => {
         if (!activeTagId) return true
-        const dWithTags = d as typeof d & { tags?: TagSummary[] }
-        return dWithTags.tags?.some(t => t.id === activeTagId) ?? false
+        return d.tags?.some(t => t.id === activeTagId) ?? false
       })
-  }, [flatDiagrams, searchQuery, activeTagId, isFiltering])
+  }, [flatDiagrams, searchQuery, activeTagId])
 
   const widthRef = useRef(width)
   useEffect(() => {
@@ -304,9 +303,8 @@ export function DiagramSidebar({ initialData, currentId, userName, initialTags }
     setTags((prev) => prev.filter((t) => t.id !== tagId))
     setFlatDiagrams((prev) =>
       prev.map((d) => {
-        const dWithTags = d as typeof d & { tags?: TagSummary[] }
-        if (!dWithTags.tags) return d
-        return { ...d, tags: dWithTags.tags.filter((t) => t.id !== tagId) }
+        if (!d.tags) return d
+        return { ...d, tags: d.tags.filter((t) => t.id !== tagId) }
       })
     )
     try {
@@ -325,8 +323,7 @@ export function DiagramSidebar({ initialData, currentId, userName, initialTags }
     setFlatDiagrams((prev) =>
       prev.map((d) => {
         if (d.id !== diagramId) return d
-        const dWithTags = d as typeof d & { tags?: TagSummary[] }
-        const existing = dWithTags.tags ?? []
+        const existing = d.tags ?? []
         if (existing.some((t) => t.id === tagId)) return d
         return { ...d, tags: [...existing, tag] }
       })
@@ -344,8 +341,7 @@ export function DiagramSidebar({ initialData, currentId, userName, initialTags }
     setFlatDiagrams((prev) =>
       prev.map((d) => {
         if (d.id !== diagramId) return d
-        const dWithTags = d as typeof d & { tags?: TagSummary[] }
-        return { ...d, tags: (dWithTags.tags ?? []).filter((t) => t.id !== tagId) }
+        return { ...d, tags: (d.tags ?? []).filter((t) => t.id !== tagId) }
       })
     )
     try {
@@ -518,8 +514,8 @@ export function DiagramSidebar({ initialData, currentId, userName, initialTags }
         <p className="px-3 py-1 text-red-400 text-xs">Could not create diagram.</p>
       )}
 
-      <SearchInput value={searchQuery} onChange={setSearchQuery} onClear={() => setSearchQuery("")} />
-      <TagFilter tags={tags} activeTagId={activeTagId} onSelect={setActiveTagId} />
+      {!collapsed && <SearchInput value={searchQuery} onChange={setSearchQuery} onClear={() => setSearchQuery("")} />}
+      {!collapsed && <TagFilter tags={tags} activeTagId={activeTagId} onSelect={setActiveTagId} />}
 
       {/* List */}
       <DndContext onDragEnd={handleDragEnd}>
@@ -538,7 +534,7 @@ export function DiagramSidebar({ initialData, currentId, userName, initialTags }
                     thumbnail={d.thumbnail}
                     onRename={handleDiagramRename}
                     onDelete={handleDiagramDelete}
-                    tags={(d as typeof d & { tags?: TagSummary[] }).tags}
+                    tags={d.tags}
                     allTags={tags}
                     onTagAssign={(tagId) => handleAssignTag(d.id, tagId)}
                     onTagRemove={(tagId) => handleRemoveTag(d.id, tagId)}
@@ -575,7 +571,7 @@ export function DiagramSidebar({ initialData, currentId, userName, initialTags }
                   thumbnail={item.thumbnail}
                   onRename={handleDiagramRename}
                   onDelete={handleDiagramDelete}
-                  tags={(item as typeof item & { tags?: TagSummary[] }).tags}
+                  tags={item.tags}
                   allTags={tags}
                   onTagAssign={(tagId) => handleAssignTag(item.id, tagId)}
                   onTagRemove={(tagId) => handleRemoveTag(item.id, tagId)}

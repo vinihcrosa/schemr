@@ -9,7 +9,7 @@ export function TagFilter({ tags, activeTagId, onSelect }: Props) {
   if (tags.length === 0) return null
 
   return (
-    <div className="flex flex-row gap-2 overflow-x-auto">
+    <div className="flex flex-row gap-2 overflow-x-auto px-2 py-1">
       {tags.map((tag) => (
         <button
           key={tag.id}

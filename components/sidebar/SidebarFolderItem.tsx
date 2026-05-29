@@ -265,7 +265,7 @@ export function SidebarFolderItem({
                 thumbnail={d.thumbnail}
                 onRename={onDiagramRename}
                 onDelete={onDiagramDelete}
-                tags={(d as typeof d & { tags?: TagSummary[] }).tags}
+                tags={d.tags}
                 allTags={allTags}
                 onTagAssign={onDiagramTagAssign ? (tagId) => onDiagramTagAssign(d.id, tagId) : undefined}
                 onTagRemove={onDiagramTagRemove ? (tagId) => onDiagramTagRemove(d.id, tagId) : undefined}
