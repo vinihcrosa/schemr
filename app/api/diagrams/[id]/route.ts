@@ -7,6 +7,7 @@ const UpdateDiagramSchema = z
   .object({
     name: z.string().min(1).max(255).optional(),
     folderId: z.string().nullable().optional(),
+    thumbnail: z.string().nullable().optional(),
     data: z
       .object({
         elements: z.array(z.any()),
@@ -16,8 +17,8 @@ const UpdateDiagramSchema = z
       .optional(),
   })
   .refine(
-    (body) => body.name !== undefined || body.data !== undefined || body.folderId !== undefined,
-    { message: "At least one of name, data, or folderId is required" }
+    (body) => body.name !== undefined || body.data !== undefined || body.folderId !== undefined || body.thumbnail !== undefined,
+    { message: "At least one of name, data, folderId, or thumbnail is required" }
   )
 
 export async function GET(
@@ -71,6 +72,7 @@ export async function PUT(
     name: parsed.data.name,
     data: parsed.data.data as Parameters<typeof updateDiagram>[2]["data"],
     folderId: parsed.data.folderId,
+    thumbnail: parsed.data.thumbnail,
   })
 
   if (!diagram) {

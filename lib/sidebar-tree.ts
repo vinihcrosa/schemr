@@ -3,6 +3,7 @@ export type DiagramEntry = {
   name: string
   updatedAt: string
   folderId: string | null
+  thumbnail?: string | null
 }
 
 export type FolderSummary = {

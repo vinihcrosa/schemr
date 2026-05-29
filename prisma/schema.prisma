@@ -36,6 +36,7 @@ model Diagram {
   id        String   @id @default(cuid())
   name      String   @default("Untitled")
   data      Json
+  thumbnail String?
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   folderId  String?

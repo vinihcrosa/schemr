@@ -8,6 +8,7 @@ export type SaveStatus = "idle" | "pending" | "saving" | "saved" | "error"
 type UseSaveStatusOptions = {
   diagramId: string
   debounceMs?: number
+  getThumbnail?: () => Promise<string | null>
 }
 
 type UseSaveStatusResult = {
@@ -19,6 +20,7 @@ type UseSaveStatusResult = {
 export function useSaveStatus({
   diagramId,
   debounceMs = 800,
+  getThumbnail,
 }: UseSaveStatusOptions): UseSaveStatusResult {
   const [status, setStatus] = useState<SaveStatus>("idle")
   const statusRef = useRef<SaveStatus>("idle")
@@ -26,6 +28,8 @@ export function useSaveStatus({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const diagramIdRef = useRef(diagramId)
+  const getThumbnailRef = useRef(getThumbnail)
+  useEffect(() => { getThumbnailRef.current = getThumbnail }, [getThumbnail])
 
   useEffect(() => { diagramIdRef.current = diagramId }, [diagramId])
 
@@ -42,10 +46,13 @@ export function useSaveStatus({
 
       setStatusBoth("saving")
       try {
+        const thumbnail = getThumbnailRef.current
+          ? await getThumbnailRef.current().catch(() => null)
+          : null
         const res = await fetch(`/api/diagrams/${diagramId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ data: state }),
+          body: JSON.stringify({ data: state, ...(thumbnail ? { thumbnail } : {}) }),
           signal: controller.signal,
         })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
