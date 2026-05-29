@@ -252,6 +252,7 @@ export function SidebarFolderItem({
                 id={d.id}
                 name={d.name}
                 isCurrent={d.id === currentDiagramId}
+                thumbnail={d.thumbnail}
                 onRename={onDiagramRename}
                 onDelete={onDiagramDelete}
               />

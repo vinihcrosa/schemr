@@ -10,20 +10,33 @@ type Props = {
   id: string
   name: string
   isCurrent: boolean
+  thumbnail?: string | null
   onRename: (id: string, name: string) => void
   onDelete: (id: string) => void
 }
 
-export function SidebarItem({ id, name, isCurrent, onRename, onDelete }: Props) {
+export function SidebarItem({ id, name, isCurrent, thumbnail, onRename, onDelete }: Props) {
   const router = useRouter()
   const [mode, setMode] = useState<ItemMode>("idle")
   const [editValue, setEditValue] = useState(name)
   const inputRef = useRef<HTMLInputElement>(null)
+  const rowRef = useRef<HTMLDivElement>(null)
+  const [thumbPos, setThumbPos] = useState<{ top: number; left: number } | null>(null)
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `diagram-${id}`,
     data: { type: "diagram", id },
   })
   const deleteTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function handleMouseEnter() {
+    if (!thumbnail || !rowRef.current) return
+    const rect = rowRef.current.getBoundingClientRect()
+    setThumbPos({ top: rect.top, left: rect.right + 8 })
+  }
+
+  function handleMouseLeave() {
+    setThumbPos(null)
+  }
 
   useEffect(() => {
     if (mode === "renaming") {
@@ -132,7 +145,10 @@ export function SidebarItem({ id, name, isCurrent, onRename, onDelete }: Props) 
 
   return (
     <div
+      ref={rowRef}
       onClick={handleRowClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       role={isCurrent ? undefined : "button"}
       tabIndex={isCurrent ? undefined : 0}
       onKeyDown={(e) => { if (e.key === "Enter") handleRowClick() }}
@@ -182,6 +198,15 @@ export function SidebarItem({ id, name, isCurrent, onRename, onDelete }: Props) 
           <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
         </svg>
       </button>
+
+      {thumbPos && thumbnail && (
+        <div
+          style={{ position: "fixed", top: thumbPos.top, left: thumbPos.left, zIndex: 9999, pointerEvents: "none" }}
+          className="bg-zinc-800 border border-zinc-600 rounded-md shadow-xl overflow-hidden"
+        >
+          <img src={thumbnail} alt={name} className="w-48 h-auto block" />
+        </div>
+      )}
     </div>
   )
 }

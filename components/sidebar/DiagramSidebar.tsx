@@ -420,6 +420,7 @@ export function DiagramSidebar({ initialData, currentId, userName }: Props) {
               id={item.id}
               name={item.name}
               isCurrent={item.id === currentId}
+              thumbnail={item.thumbnail}
               onRename={handleDiagramRename}
               onDelete={handleDiagramDelete}
             />

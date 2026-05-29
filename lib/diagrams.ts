@@ -16,6 +16,7 @@ export type DiagramSummary = {
   name: string
   updatedAt: Date
   folderId: string | null
+  thumbnail: string | null
 }
 
 export type DiagramDetail = DiagramSummary & {
@@ -39,6 +40,7 @@ export async function createDiagram(
     name: diagram.name,
     updatedAt: diagram.updatedAt,
     folderId: diagram.folderId ?? null,
+    thumbnail: diagram.thumbnail ?? null,
     data: deserializeCanvas(diagram.data),
   }
 }
@@ -56,6 +58,7 @@ export async function getDiagramById(
     name: diagram.name,
     updatedAt: diagram.updatedAt,
     folderId: diagram.folderId ?? null,
+    thumbnail: diagram.thumbnail ?? null,
     data: deserializeCanvas(diagram.data),
   }
 }
@@ -63,10 +66,10 @@ export async function getDiagramById(
 export async function listDiagrams(userId: string): Promise<DiagramSummary[]> {
   const diagrams = await db.diagram.findMany({
     where: { userId },
-    select: { id: true, name: true, updatedAt: true, folderId: true },
+    select: { id: true, name: true, updatedAt: true, folderId: true, thumbnail: true },
     orderBy: { updatedAt: "desc" },
   })
-  return diagrams
+  return diagrams.map((d) => ({ ...d, thumbnail: d.thumbnail ?? null }))
 }
 
 export async function deleteDiagram(id: string, userId: string): Promise<boolean> {
@@ -77,7 +80,7 @@ export async function deleteDiagram(id: string, userId: string): Promise<boolean
 export async function updateDiagram(
   id: string,
   userId: string,
-  patch: { name?: string; data?: ExcalidrawState; folderId?: string | null }
+  patch: { name?: string; data?: ExcalidrawState; folderId?: string | null; thumbnail?: string | null }
 ): Promise<DiagramDetail | null> {
   const result = await db.diagram.updateMany({
     where: { id, userId },
@@ -85,6 +88,7 @@ export async function updateDiagram(
       ...(patch.name !== undefined ? { name: patch.name } : {}),
       ...(patch.data !== undefined ? { data: patch.data as object } : {}),
       ...(patch.folderId !== undefined ? { folderId: patch.folderId } : {}),
+      ...(patch.thumbnail !== undefined ? { thumbnail: patch.thumbnail } : {}),
     },
   })
   if (result.count === 0) return null
@@ -95,6 +99,7 @@ export async function updateDiagram(
     name: diagram.name,
     updatedAt: diagram.updatedAt,
     folderId: diagram.folderId ?? null,
+    thumbnail: diagram.thumbnail ?? null,
     data: deserializeCanvas(diagram.data),
   }
 }
