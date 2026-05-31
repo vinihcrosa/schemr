@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 136 36" fill="none">
+  <!-- Icon (36x36) -->
+  <rect width="36" height="36" rx="8" fill="#3730a3"/>
+
+  <!-- Top node -->
+  <path d="M18 5.5 C20.2 5.6 21.5 7.2 21.4 9 C21.3 10.8 19.8 12 18 11.9 C16 11.8 14.6 10.4 14.7 8.8 C14.8 7.1 16.2 5.4 18 5.5 Z"
+        stroke="#c7d2fe" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Bottom-left node -->
+  <path d="M10 22 C12 21.9 13.2 23.2 13.1 24.8 C13 26.4 11.7 27.6 10 27.5 C8.1 27.4 7 26 7.2 24.5 C7.4 22.9 8.4 22.1 10 22 Z"
+        stroke="#c7d2fe" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Bottom-right node -->
+  <path d="M26 22 C28 22.1 29 23.4 28.8 24.9 C28.6 26.4 27.2 27.6 25.5 27.5 C23.7 27.4 22.8 26 23 24.5 C23.2 22.9 24.4 21.9 26 22 Z"
+        stroke="#c7d2fe" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Edge: top → bottom-left -->
+  <path d="M16.2 12.8 C14.5 16 12.5 19.5 11.4 22"
+        stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round"/>
+
+  <!-- Edge: top → bottom-right -->
+  <path d="M19.8 12.8 C21.5 16 23.6 19.6 24.7 22"
+        stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round"/>
+
+  <!-- Edge: bottom-left → bottom-right -->
+  <path d="M13.2 25 C16.5 24.5 20 24.5 22.8 25"
+        stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round"/>
+
+  <!-- "schemr" text -->
+  <text x="46" y="24"
+        font-family="'Segoe UI', system-ui, -apple-system, sans-serif"
+        font-size="18"
+        font-weight="700"
+        letter-spacing="-0.5"
+        fill="#f1f5f9">schemr</text>
+</svg>
