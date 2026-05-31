@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Background -->
+  <rect width="32" height="32" rx="7" fill="#3730a3"/>
+
+  <!-- Top node - slightly imperfect circle -->
+  <path d="M16 5.5 C18.2 5.6 19.5 7 19.4 8.8 C19.3 10.6 17.8 11.8 16 11.7 C14 11.6 12.6 10.2 12.7 8.6 C12.8 6.9 14.2 5.4 16 5.5 Z"
+        stroke="#c7d2fe" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Bottom-left node -->
+  <path d="M9 19.8 C11 19.7 12.2 21 12.1 22.6 C12 24.2 10.7 25.4 9 25.3 C7.1 25.2 6 23.8 6.2 22.3 C6.4 20.7 7.4 19.9 9 19.8 Z"
+        stroke="#c7d2fe" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Bottom-right node -->
+  <path d="M23 19.8 C25 19.9 26 21.2 25.8 22.7 C25.6 24.2 24.2 25.4 22.5 25.3 C20.7 25.2 19.8 23.8 20 22.3 C20.2 20.7 21.4 19.7 23 19.8 Z"
+        stroke="#c7d2fe" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Edge: top → bottom-left (slightly curved) -->
+  <path d="M14.2 11.5 C12.8 14.2 11.2 17.1 10.4 19.8"
+        stroke="#a5b4fc" stroke-width="1.7" stroke-linecap="round"/>
+
+  <!-- Edge: top → bottom-right (slightly curved) -->
+  <path d="M17.8 11.5 C19.3 14.3 21 17.2 21.7 19.8"
+        stroke="#a5b4fc" stroke-width="1.7" stroke-linecap="round"/>
+
+  <!-- Edge: bottom-left → bottom-right (slightly curved) -->
+  <path d="M12.2 22.5 C15 22.1 18.2 22.1 20.1 22.5"
+        stroke="#a5b4fc" stroke-width="1.7" stroke-linecap="round"/>
+</svg>

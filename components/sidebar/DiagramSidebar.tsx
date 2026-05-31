@@ -442,7 +442,7 @@ export function DiagramSidebar({ initialData, currentId, userName, initialTags }
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
-        <span className="flex-1 text-zinc-300 text-xs font-medium px-1">Schemr</span>
+        <img src="/logo.svg" alt="schemr" className="flex-1 h-5 object-left object-contain px-1" />
         <button
           onClick={() => setTagManagerOpen(true)}
           className="p-1 text-zinc-400 hover:text-zinc-200 transition-colors"
