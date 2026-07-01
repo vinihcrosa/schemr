@@ -153,11 +153,28 @@
 
 ---
 
+## M7 — Public Share Link
+
+**Goal:** An owner can expose a single diagram as a read-only public URL, viewable without an account, and revoke it at any time.
+**Status:** SHIPPED → [spec](../features/m7-share-link/spec.md)
+
+### Features
+
+**Share Link** - SHIPPED
+
+- Enable a share link on any owned diagram (`shareToken`, single nullable unique column) (P1)
+- Public `/share/:token` read-only view (Excalidraw `viewModeEnabled`, no auth, no sidebar) (P1)
+- Public payload exposes only diagram name + canvas data — no owner/tags/folders (P1)
+- Revoke clears the token; re-enabling mints a new one, old URLs stay dead (P1)
+- Persistent "public" indicator + copy-link control in the editor (P2)
+
+---
+
 ## Future Considerations
 
 - OAuth providers (Google, GitHub) — post-MVP auth extension
 - Real-time collaboration (multi-user editing)
 - Version history / snapshot diffing
-- Diagram search by name or tag
-- Sharing Diagrams via public link
-- Export to PNG/SVG
+- Auto-generated thumbnails on save (field exists, not yet populated)
+- Export to PNG/SVG / `.excalidraw`
+- Full-text search inside diagram content (element text)
