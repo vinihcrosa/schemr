@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto"
 import { db } from "@/lib/db"
 import { deserializeCanvas, EMPTY_DIAGRAM, type ExcalidrawState } from "@/lib/excalidraw"
 import type { TagSummary } from "@/lib/tags"
@@ -23,6 +24,18 @@ export type DiagramSummary = {
 
 export type DiagramDetail = DiagramSummary & {
   data: ExcalidrawState
+  shareToken: string | null
+}
+
+// Public share payload — deliberately minimal. Never widen this: exposing
+// userId / relations here would leak owner data on the unauthenticated route.
+export type SharedDiagram = {
+  name: string
+  data: ExcalidrawState
+}
+
+function generateShareToken(): string {
+  return randomBytes(16).toString("base64url")
 }
 
 export async function createDiagram(
@@ -45,6 +58,7 @@ export async function createDiagram(
     thumbnail: diagram.thumbnail ?? null,
     tags: [],
     data: deserializeCanvas(diagram.data),
+    shareToken: diagram.shareToken ?? null,
   }
 }
 
@@ -63,6 +77,74 @@ export async function getDiagramById(
     folderId: diagram.folderId ?? null,
     thumbnail: diagram.thumbnail ?? null,
     tags: [],
+    data: deserializeCanvas(diagram.data),
+    shareToken: diagram.shareToken ?? null,
+  }
+}
+
+// Mint a share token if absent; idempotent — returns the existing token when
+// already shared. Ownership-scoped: returns null if the diagram isn't owned by
+// userId. Retries on the (astronomically unlikely) unique-collision.
+export async function shareDiagram(
+  id: string,
+  userId: string
+): Promise<{ shareToken: string } | null> {
+  const existing = await db.diagram.findFirst({
+    where: { id, userId },
+    select: { shareToken: true },
+  })
+  if (!existing) return null
+  if (existing.shareToken) return { shareToken: existing.shareToken }
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const token = generateShareToken()
+    try {
+      const result = await db.diagram.updateMany({
+        where: { id, userId },
+        data: { shareToken: token },
+      })
+      if (result.count === 0) return null
+      return { shareToken: token }
+    } catch (err) {
+      // P2002 = unique constraint violation on shareToken → retry with a new token
+      if (
+        typeof err === "object" &&
+        err !== null &&
+        "code" in err &&
+        (err as { code?: string }).code === "P2002"
+      ) {
+        continue
+      }
+      throw err
+    }
+  }
+  return null
+}
+
+// Clear the share token (revoke). Returns false if the diagram isn't owned.
+export async function unshareDiagram(
+  id: string,
+  userId: string
+): Promise<boolean> {
+  const result = await db.diagram.updateMany({
+    where: { id, userId },
+    data: { shareToken: null },
+  })
+  return result.count > 0
+}
+
+// Public lookup by share token — selects ONLY name + data. No userId, no
+// relations. Returns null for missing / revoked tokens.
+export async function getDiagramByShareToken(
+  token: string
+): Promise<SharedDiagram | null> {
+  const diagram = await db.diagram.findUnique({
+    where: { shareToken: token },
+    select: { name: true, data: true },
+  })
+  if (!diagram) return null
+  return {
+    name: diagram.name,
     data: deserializeCanvas(diagram.data),
   }
 }
@@ -121,5 +203,6 @@ export async function updateDiagram(
     thumbnail: diagram.thumbnail ?? null,
     tags: [],
     data: deserializeCanvas(diagram.data),
+    shareToken: diagram.shareToken ?? null,
   }
 }
