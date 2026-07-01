@@ -52,7 +52,7 @@ export default async function DiagramPage({
     <div className="flex h-screen w-screen overflow-hidden">
       <DiagramSidebar initialData={sidebarData} currentId={id} userName={userName} initialTags={tags} />
       <main className="flex-1 overflow-hidden">
-        <ExcalidrawEditor initialData={diagram.data} diagramId={diagram.id} />
+        <ExcalidrawEditor initialData={diagram.data} diagramId={diagram.id} shareToken={diagram.shareToken} />
       </main>
     </div>
   )
