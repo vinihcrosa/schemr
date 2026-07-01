@@ -35,10 +35,11 @@ model Folder {
 
 model Diagram {
   id        String   @id @default(cuid())
-  name      String   @default("Untitled")
-  data      Json
-  thumbnail String?
-  userId    String
+  name       String   @default("Untitled")
+  data       Json
+  thumbnail  String?
+  shareToken String?  @unique
+  userId     String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   folderId  String?
   folder    Folder?     @relation(fields: [folderId], references: [id], onDelete: SetNull)

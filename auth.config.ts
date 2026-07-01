@@ -9,9 +9,14 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user
-      const isAuthPage =
-        nextUrl.pathname === "/sign-in" || nextUrl.pathname === "/sign-up"
-      if (isAuthPage) return true
+      const p = nextUrl.pathname
+      // Public paths reachable without auth: auth pages + share view/API.
+      const isPublic =
+        p === "/sign-in" ||
+        p === "/sign-up" ||
+        p.startsWith("/share/") ||
+        p.startsWith("/api/share/")
+      if (isPublic) return true
       return isLoggedIn
     },
     async jwt({ token, user }) {
