@@ -43,7 +43,6 @@ next-env.d.ts
 
 # AI local files
 .agents
-.claude
 .codex
 
 tmp.md

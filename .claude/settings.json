@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(yarn add *)",
+      "Bash(open -a Docker)",
+      "Bash(docker compose *)",
+      "Bash(npx prisma *)",
+      "Bash(DATABASE_URL=\"postgresql://schemr:schemr@localhost:5433/schemr_dev\" npx prisma migrate dev --name init)",
+      "Bash(docker exec *)",
+      "Bash(DATABASE_URL=\"postgresql://schemr:schemr@localhost:5433/schemr_test\" npx prisma migrate deploy)"
+    ]
+  }
+}
