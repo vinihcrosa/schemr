@@ -1,0 +1,31 @@
+"$schema" = "https://conductor.build/schemas/settings.repo.schema.json"
+
+# Copy gitignored env files into every new workspace (needed by docker-compose, Next.js and Prisma).
+file_include_globs = ".env*\n"
+
+[scripts]
+# DB must be up BEFORE yarn install: postinstall runs `prisma generate && prisma migrate deploy`.
+# Shared "-p schemr" project name => all workspaces reuse ONE postgres stack (fixed host port 5433).
+# Docker only exists locally, so guard it on CONDUCTOR_IS_LOCAL.
+setup = """
+if [ "$CONDUCTOR_IS_LOCAL" = "1" ]; then
+  docker compose -p schemr --env-file .env.local up -d
+fi
+yarn install
+"""
+
+# Postgres is a single shared stack on fixed port 5433 with a shared volume -> only one run at a time.
+run_mode = "nonconcurrent"
+
+[scripts.run.dev]
+command = "yarn dev --port $CONDUCTOR_PORT"
+default = true
+icon = "play"
+
+[scripts.run.test]
+command = "yarn test:unit"
+icon = "test-tube"
+
+[scripts.run.e2e]
+command = "yarn test:e2e"
+icon = "bug"
