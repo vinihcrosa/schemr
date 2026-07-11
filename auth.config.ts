@@ -7,9 +7,9 @@ export const authConfig: NextAuthConfig = {
   },
   providers: [],
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
+    authorized({ auth, request }) {
       const isLoggedIn = !!auth?.user
-      const p = nextUrl.pathname
+      const p = request.nextUrl.pathname
       // Public paths reachable without auth: auth pages + share view/API.
       const isPublic =
         p === "/sign-in" ||
@@ -17,6 +17,12 @@ export const authConfig: NextAuthConfig = {
         p.startsWith("/share/") ||
         p.startsWith("/api/share/")
       if (isPublic) return true
+      // Bearer API keys authenticate at the route handler, not the session.
+      // Let bearer-carrying /api/* requests through; the handler re-validates.
+      const hasBearer = request.headers
+        ?.get("authorization")
+        ?.startsWith("Bearer ")
+      if (p.startsWith("/api/") && hasBearer) return true
       return isLoggedIn
     },
     async jwt({ token, user }) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { requireSession } from "@/lib/auth"
+import { requireActor } from "@/lib/auth"
 import { createDiagram, listDiagrams } from "@/lib/diagrams"
 
 const CreateDiagramSchema = z.object({
@@ -15,9 +15,9 @@ const CreateDiagramSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
-  let session
+  let actor
   try {
-    session = await requireSession()
+    actor = await requireActor(req)
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   }
 
   const diagram = await createDiagram(
-    session.user.id,
+    actor.userId,
     parsed.data.name,
     parsed.data.data as Parameters<typeof createDiagram>[2]
   )
@@ -46,14 +46,14 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(diagram, { status: 201 })
 }
 
-export async function GET() {
-  let session
+export async function GET(req: NextRequest) {
+  let actor
   try {
-    session = await requireSession()
+    actor = await requireActor(req)
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const diagrams = await listDiagrams(session.user.id)
+  const diagrams = await listDiagrams(actor.userId)
   return NextResponse.json(diagrams)
 }
