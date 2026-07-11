@@ -14,7 +14,23 @@ model User {
   diagrams  Diagram[]
   folders   Folder[]
   tags      Tag[]
+  apiKeys   ApiKey[]
   createdAt DateTime  @default(now())
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label      String    @default("API key")
+  hashedKey  String    @unique
+  prefix     String
+  scopes     String[]  @default(["diagrams"])
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
 }
 
 model Folder {
