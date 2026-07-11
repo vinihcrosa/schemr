@@ -187,7 +187,7 @@
 
 ### Features
 
-**API Key Issuance** - PLANNED
+**API Key Issuance** - SPECIFIED → [spec](../features/m8-api-keys/spec.md)
 
 - `ApiKey` model (id, userId, hashed key, label, scopes, createdAt, lastUsedAt, revokedAt) (P1)
 - Generate key = show plaintext once, store only hash (P1)
