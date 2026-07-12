@@ -130,8 +130,8 @@ describe("authorized callback — bearer allowance", () => {
     expect(check("/api/diagrams", false, true)).toBe(true)
   })
 
-  it("still blocks an /api/* request with no bearer and no session", () => {
-    expect(check("/api/diagrams", false, false)).toBe(false)
+  it("lets an /api/* request through even with no bearer and no session — the handler returns 401 JSON (not an HTML sign-in redirect)", () => {
+    expect(check("/api/diagrams", false, false)).toBe(true)
   })
 
   it("does not grant page routes via a bearer header", () => {

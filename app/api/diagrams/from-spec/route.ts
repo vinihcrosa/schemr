@@ -55,6 +55,8 @@ export async function POST(req: NextRequest) {
     if (err instanceof SpecParseError) {
       return NextResponse.json({ error: err.message }, { status: 400 })
     }
+    // Unexpected — log for diagnosis and surface as a 500.
+    console.error("[from-spec] unexpected conversion error:", err)
     throw err
   }
 

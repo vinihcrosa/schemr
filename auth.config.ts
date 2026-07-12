@@ -2,6 +2,9 @@ import type { NextAuthConfig } from "next-auth"
 
 export const authConfig: NextAuthConfig = {
   session: { strategy: "jwt" },
+  // Trust the deployment host (Vercel sets this automatically; required for
+  // self-hosted `next start` / E2E, otherwise Auth.js throws UntrustedHost).
+  trustHost: true,
   pages: {
     signIn: "/sign-in",
   },
@@ -17,12 +20,11 @@ export const authConfig: NextAuthConfig = {
         p.startsWith("/share/") ||
         p.startsWith("/api/share/")
       if (isPublic) return true
-      // Bearer API keys authenticate at the route handler, not the session.
-      // Let bearer-carrying /api/* requests through; the handler re-validates.
-      const hasBearer = request.headers
-        ?.get("authorization")
-        ?.startsWith("Bearer ")
-      if (p.startsWith("/api/") && hasBearer) return true
+      // API routes authenticate inside their own handlers (session or bearer)
+      // and return a proper 401 JSON response. Let every /api/* request reach
+      // its handler instead of redirecting to /sign-in — a redirect to an HTML
+      // page is the wrong contract for machine clients (bearer keys, MCP).
+      if (p.startsWith("/api/")) return true
       return isLoggedIn
     },
     async jwt({ token, user }) {
