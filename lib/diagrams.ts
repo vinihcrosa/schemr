@@ -41,13 +41,15 @@ function generateShareToken(): string {
 export async function createDiagram(
   userId: string,
   name?: string,
-  data?: ExcalidrawState
+  data?: ExcalidrawState,
+  folderId?: string | null
 ): Promise<DiagramDetail> {
   const diagram = await db.diagram.create({
     data: {
       userId,
       name: name ?? defaultDiagramName(),
       data: (data ?? EMPTY_DIAGRAM) as object,
+      ...(folderId != null ? { folderId } : {}),
     },
   })
   return {
