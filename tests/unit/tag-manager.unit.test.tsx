@@ -32,7 +32,7 @@ describe("TagManager", () => {
   it("shows error when submitting empty input", async () => {
     const user = userEvent.setup()
     render(<TagManager {...makeProps()} />)
-    await user.click(screen.getByRole("button", { name: /create/i }))
+    await user.click(screen.getByRole("button", { name: /create tag/i }))
     expect(screen.getByRole("alert")).toHaveTextContent("Tag name required")
   })
 
@@ -40,7 +40,7 @@ describe("TagManager", () => {
     const user = userEvent.setup()
     render(<TagManager {...makeProps()} />)
     await user.type(screen.getByRole("textbox", { name: /new tag name/i }), "a".repeat(33))
-    await user.click(screen.getByRole("button", { name: /create/i }))
+    await user.click(screen.getByRole("button", { name: /create tag/i }))
     expect(screen.getByRole("alert")).toHaveTextContent("Max 32 characters")
   })
 
@@ -49,7 +49,7 @@ describe("TagManager", () => {
     const onCreate = vi.fn().mockResolvedValue(undefined)
     render(<TagManager {...makeProps({ onCreate })} />)
     await user.type(screen.getByRole("textbox", { name: /new tag name/i }), "  newtag  ")
-    await user.click(screen.getByRole("button", { name: /create/i }))
+    await user.click(screen.getByRole("button", { name: /create tag/i }))
     expect(onCreate).toHaveBeenCalledWith("newtag")
   })
 

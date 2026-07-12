@@ -73,7 +73,7 @@ export function TagManager({ tags, onCreate, onDelete, onClose }: Props) {
           disabled={loading}
           className="shrink-0 text-xs bg-zinc-700 hover:bg-zinc-600 text-zinc-200 px-2 py-1 rounded disabled:opacity-50"
         >
-          {loading ? "Creating..." : "Add tag"}
+          {loading ? "Creating..." : "Create tag"}
         </button>
       </div>
       {error && <p role="alert" className="text-xs text-red-400 mb-2">{error}</p>}
