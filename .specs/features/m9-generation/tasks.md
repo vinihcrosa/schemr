@@ -2,7 +2,7 @@
 
 **Design**: `.specs/features/m9-generation/design.md`
 **Context/Decisions**: `.specs/features/m9-generation/context.md`
-**Status**: Implemented (T1–T5 verified green; T6 written, blocked by pre-existing build issue)
+**Status**: Implemented — T1–T6 all verified green.
 
 ---
 
@@ -13,15 +13,23 @@
   SVG metrics) and hand-converting the geometry skeleton — no excalidraw runtime dep.
 - **T2–T5 verified green**: 22 unit tests (conversion, node-env headless path, deterministic
   normalization, multi-type fixtures) + 11 integration tests (createDiagram folderId 3, from-spec
-  route 8) all pass against the real test Postgres. Lint: 0 errors. `next build` **type-check passes**
-  for all M9 code.
-- **T6 E2E is written but blocked by a pre-existing, environment-level failure**: `next build` (and
-  thus the Playwright `webServer = next build && next start`) fails resolving `next/font/google`
-  (Geist Mono) from `app/layout.tsx` — a file M9 does not touch, offline in this sandbox (same
-  blocker M8's T9 hit). The spec will run on CI / a network-available env.
+  route 8) all pass against the real test Postgres. Lint: 0 errors.
+- **T6 E2E verified green** against the real production server. Enabling it required unblocking the
+  Playwright `webServer` (`next build && next start`), which had **never run before**:
+  - fonts: `next/font/google` → self-hosted `geist` package (no build-time network fetch);
+  - Auth.js: `trustHost: true` + `AUTH_SECRET` in the webServer env (production `next start` needs both);
+  - bundled-server conversion: `serverExternalPackages` for jsdom/mermaid/mermaid-to-excalidraw so
+    they load lazily after the jsdom shim (else mermaid's DOMPurify inits with no window).
+  - API middleware now lets `/api/*` reach handlers (401 JSON) instead of redirecting to sign-in.
 - **Known limitation** (D6): flowcharts with edge labels (`-->|text|`) fail gracefully (400) under
   headless jsdom; asserted by an explicit test. Label-free flowcharts, sequence, class convert fully;
   ER converts minimally.
+- **Pre-existing E2E debt surfaced (NOT M9)**: with the suite finally runnable, 29/42 pass; the 13
+  failures are all in `sidebar`/`search`/`tags` specs that had never executed. Root causes are
+  unrelated to M9: (a) tests wait for a `rename/delete untitled` button, but `defaultDiagramName()`
+  names new diagrams with a timestamp, not "Untitled" (DESIGN.md says "Untitled" — a spec/impl
+  divergence); (b) `getByText('infra')` strict-mode violations (selector matches 2 elements). Both
+  belong to a separate M3/M4/M6 test-fix task.
 
 ---
 
