@@ -3,14 +3,9 @@ import { db } from "@/lib/db"
 import { deserializeCanvas, EMPTY_DIAGRAM, type ExcalidrawState } from "@/lib/excalidraw"
 import type { TagSummary } from "@/lib/tags"
 
+// Default diagram title per DESIGN.md ("Untitled"). Users rename inline.
 function defaultDiagramName(): string {
-  const now = new Date()
-  const hh = String(now.getHours()).padStart(2, "0")
-  const mm = String(now.getMinutes()).padStart(2, "0")
-  const dd = String(now.getDate()).padStart(2, "0")
-  const mo = String(now.getMonth() + 1).padStart(2, "0")
-  const aa = String(now.getFullYear()).slice(-2)
-  return `${hh}-${mm}-${dd}-${mo}-${aa}`
+  return "Untitled"
 }
 
 export type DiagramSummary = {
