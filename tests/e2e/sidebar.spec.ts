@@ -21,6 +21,15 @@ async function createDiagram(page: Parameters<typeof test>[1]["page"]) {
   await expect(page).toHaveURL(/\/diagrams\//)
 }
 
+// Create another diagram and wait for the URL to actually change (toHaveURL
+// with a generic /diagrams/ regex matches the page we are already on).
+async function newDiagram(page: Parameters<typeof test>[1]["page"]) {
+  const before = page.url()
+  await page.getByRole("button", { name: /new diagram/i }).click()
+  await expect(page).not.toHaveURL(before)
+  await expect(page).toHaveURL(/\/diagrams\//)
+}
+
 // ─── Index redirect ───────────────────────────────────────────────────────────
 
 test("authenticated user with diagrams: / redirects to most recent", async ({ page }) => {
@@ -130,13 +139,12 @@ test("click sidebar item navigates to that diagram", async ({ page }) => {
   const firstUrl = page.url()
 
   // create second diagram via sidebar "+"
-  await page.getByRole("button", { name: /new diagram/i }).click()
-  await expect(page).toHaveURL(/\/diagrams\//)
+  await newDiagram(page)
   const secondUrl = page.url()
   expect(secondUrl).not.toBe(firstUrl)
 
   // click first diagram in sidebar
-  const items = page.locator('[data-testid="sidebar-expanded"] [role="button"]')
+  const items = page.locator('[data-testid="sidebar-item"]')
   // second item (index 1) is the first (older) diagram - list is updatedAt desc
   await items.nth(1).click()
   await expect(page).toHaveURL(firstUrl)
@@ -150,18 +158,17 @@ test("+ button creates diagram and shows it at top of sidebar", async ({ page })
   await createDiagram(page)
 
   const countBefore = await page
-    .locator('[data-testid="sidebar-expanded"] [role="button"]')
+    .locator('[data-testid="sidebar-item"]')
     .count()
 
-  await page.getByRole("button", { name: /new diagram/i }).click()
-  await expect(page).toHaveURL(/\/diagrams\//)
+  await newDiagram(page)
 
   // new item appears at top highlighted as current
   const current = page.locator('[aria-current="page"]')
   await expect(current).toBeVisible()
 
   const countAfter = await page
-    .locator('[data-testid="sidebar-expanded"] [role="button"]')
+    .locator('[data-testid="sidebar-item"]')
     .count()
   expect(countAfter).toBeGreaterThan(countBefore)
 })
@@ -192,10 +199,9 @@ test("delete pending → second click removes item", async ({ page }) => {
 
   // create two diagrams so we can delete one without navigating away
   await createDiagram(page)
-  await page.getByRole("button", { name: /new diagram/i }).click()
-  await expect(page).toHaveURL(/\/diagrams\//)
+  await newDiagram(page)
 
-  const items = page.locator('[data-testid="sidebar-expanded"] [role="button"]')
+  const items = page.locator('[data-testid="sidebar-item"]')
   const secondItem = items.nth(1)
   await secondItem.hover()
 
@@ -210,26 +216,25 @@ test("delete pending → click elsewhere → item stays", async ({ page }) => {
   const email = uniqueEmail()
   await signUp(page, email)
   await createDiagram(page)
-  await page.getByRole("button", { name: /new diagram/i }).click()
-  await expect(page).toHaveURL(/\/diagrams\//)
+  await newDiagram(page)
 
-  const items = page.locator('[data-testid="sidebar-expanded"] [role="button"]')
+  const items = page.locator('[data-testid="sidebar-item"]')
   const secondItem = items.nth(1)
   await secondItem.hover()
 
   await page.getByRole("button", { name: /delete untitled/i }).first().click()
   await expect(page.getByRole("button", { name: /confirm delete/i })).toBeVisible()
 
-  // click elsewhere (outside the delete-pending row)
-  await page.getByRole("button", { name: /new diagram/i }).click({ force: true })
-  // wait briefly then cancel, not confirm
-  await expect(page.getByRole("button", { name: /confirm delete/i })).not.toBeVisible()
+  // Click a neutral element (NOT confirm, and not the new-diagram button which
+  // would create a diagram). Clicking elsewhere must not delete the item.
+  await page.getByLabel(/search diagrams/i).click()
 
+  // The item is still there — clicking elsewhere does not delete it.
   await waitForItemCount(page, 2)
 })
 
 async function waitForItemCount(page: Parameters<typeof test>[1]["page"], count: number) {
   await expect(
-    page.locator('[data-testid="sidebar-expanded"] [role="button"]')
+    page.locator('[data-testid="sidebar-item"]')
   ).toHaveCount(count, { timeout: 5000 })
 }

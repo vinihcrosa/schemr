@@ -20,6 +20,16 @@ export async function createDiagram(page: Page) {
   await expect(page).toHaveURL(/\/diagrams\//)
 }
 
+// Create an additional diagram from the sidebar and wait for the URL to
+// actually change — `toHaveURL(/\/diagrams\//)` alone matches the page we are
+// already on and races ahead of the new-diagram navigation.
+export async function newDiagram(page: Page) {
+  const before = page.url()
+  await page.getByRole("button", { name: /new diagram/i }).click()
+  await expect(page).not.toHaveURL(before)
+  await expect(page).toHaveURL(/\/diagrams\//)
+}
+
 export async function openTagManager(page: Page) {
   await page.getByLabel("Manage tags").click()
 }

@@ -69,7 +69,7 @@ test("clearing search restores full list", async ({ page }) => {
   await page.getByRole("button", { name: /new diagram/i }).click()
   await expect(page).toHaveURL(/\/diagrams\//)
 
-  const sidebarItems = page.locator('[data-testid="sidebar-expanded"] [role="button"]')
+  const sidebarItems = page.locator('[data-testid="sidebar-item"]')
   const countBefore = await sidebarItems.count()
   expect(countBefore).toBeGreaterThanOrEqual(2)
 
