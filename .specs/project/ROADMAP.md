@@ -170,6 +170,135 @@
 
 ---
 
+## AI Diagram MCP — Epic Overview
+
+**Vision:** Expose Schemr's diagram operations to AI agents via an MCP server, so an LLM can create and modify diagrams from natural language and hand the user back an editable canvas.
+
+**Core principle:** The AI **never** writes raw Excalidraw `elements[]`. It speaks Mermaid (or a simple DSL); the server converts and normalizes into valid Excalidraw JSON. The MCP protocol is a thin shell — the value lives in the generation/normalization layer.
+
+**Delivery order:** M8 (auth) → M9 (generation) → M10 (MCP) = usable MVP. M11 (incremental edit) → M12 (polish) after validating real usage.
+
+---
+
+## M8 — Machine Auth (API Keys)
+
+**Goal:** A user can mint and revoke long-lived API keys that authenticate non-browser clients against the existing REST API. Foundation for every later phase.
+**Target:** TBD (~0.5 day)
+
+### Features
+
+**API Key Issuance** - SPECIFIED → [spec](../features/m8-api-keys/spec.md)
+
+- `ApiKey` model (id, userId, hashed key, label, scopes, createdAt, lastUsedAt, revokedAt) (P1)
+- Generate key = show plaintext once, store only hash (P1)
+- Minimal UI in settings/user menu: create, list, revoke (P1)
+
+**Bearer Auth Middleware** - PLANNED
+
+- Accept `Authorization: Bearer <key>` on API routes, in addition to NextAuth session (P1)
+- Resolve `userId` from key; reuse existing ownership checks unchanged (P1)
+- Update `lastUsedAt`; reject revoked/unknown keys with 401 (P1)
+
+**In scope:** key lifecycle, hash-at-rest, bearer resolution on existing routes.
+**Out of scope:** OAuth/device flow, per-route scope enforcement beyond a single `diagrams` scope, rate limiting (M12), key expiry/rotation policies, org/team keys.
+
+---
+
+## M9 — Generation Layer (spec → Excalidraw)
+
+**Goal:** Given a Mermaid spec (or simple DSL), the server produces valid Excalidraw JSON that opens in the canvas with no rendering errors, correct arrow bindings, and stable z-order. Testable without MCP.
+**Target:** TBD (~1–2 days)
+
+### Features
+
+**Spec → Diagram Conversion** - PLANNED
+
+- `POST /api/diagrams/from-spec` — accepts `{ name?, folderId?, spec, format: "mermaid" }` (P1)
+- Convert via `@excalidraw/mermaid-to-excalidraw` (P1)
+- Persist as a normal Diagram; returns `DiagramDetail` (reuses `createDiagram`) (P1)
+
+**Element Normalization** - PLANNED
+
+- Fill required Excalidraw fields: fractional `index`, `seed`, `version`, `versionNonce`, `roundness`, `groupIds` (P1)
+- Repair/verify arrow `boundElements` + `startBinding`/`endBinding` so connectors stay attached (P1)
+- Deterministic output (no reliance on `Date.now()`/random for identity) (P1)
+
+**Conversion Validation** - PLANNED
+
+- Test suite: spec in → deserialize via `lib/excalidraw.ts` → asserts elements valid + bindings intact (P1)
+- Graceful 400 on unparseable spec (P1)
+
+**In scope:** Mermaid support (flowchart, sequence, class, ER — whatever the lib supports), create-only, server-side normalization + tests.
+**Out of scope:** editing existing diagrams (M11), auto-layout beyond what Mermaid gives (M12), custom DSL (only if Mermaid proves insufficient), styling/theming controls, image/file elements, thumbnails.
+
+---
+
+## M10 — MCP Server (thin shell)
+
+**Goal:** An AI agent, authenticated with an API key, can list, read, create-from-spec, and delete diagrams over MCP, and receive a shareable link back.
+**Target:** TBD (~0.5–1 day)
+
+### Features
+
+**MCP Tools** - PLANNED
+
+- `list_diagrams`, `get_diagram` (P1)
+- `create_diagram_from_spec` (wraps M9 endpoint) (P1)
+- `delete_diagram` (P1)
+- Returns diagram id + URL; offers share link via existing M7 `shareToken` when asked (P2)
+
+**Transport & Auth** - PLANNED
+
+- MCP server authenticates to REST using the caller's API key (M8) (P1)
+- Config/docs for wiring the server into an MCP client (P1)
+
+**In scope:** thin protocol wrapper over M8+M9 REST, create/read/list/delete, link return.
+**Out of scope:** incremental edit tools (M11), server-side agent orchestration, streaming/progress, multi-tenant hosting, non-MCP integrations.
+
+---
+
+## M11 — Incremental Editing
+
+**Goal:** The AI can modify an existing diagram — add/connect/update/remove elements — while preserving untouched layout and existing bindings.
+**Target:** TBD (post-MVP)
+
+### Features
+
+**Element-Level Operations** - PLANNED
+
+- `add_node`, `connect`, `update_node`, `remove_element` operating on a live diagram (P1)
+- Stable element IDs surfaced to the agent for targeting (P1)
+- Merge changes without breaking existing `boundElements`/bindings or reflowing untouched nodes (P1)
+
+**In scope:** additive + targeted edits on existing diagrams, ID-stable merge/diff.
+**Out of scope:** full re-layout on edit, conflict resolution vs. concurrent human edits, undo/history, semantic "rewrite whole diagram from new spec" (that's re-create via M9).
+
+---
+
+## M12 — Polish & Hardening
+
+**Goal:** Production-quality edges: layout quality, thumbnails, and abuse protection on the machine-facing surface.
+**Target:** TBD (post-MVP)
+
+### Features
+
+**Auto-Layout** - PLANNED
+
+- Server-side layout (e.g. dagre) so agents can omit coordinates and still get readable diagrams (P2)
+
+**Thumbnails** - PLANNED
+
+- Populate the existing `Diagram.thumbnail` field on create-from-spec (P2)
+
+**Rate Limiting** - PLANNED
+
+- Per-key rate limits on MCP/machine routes (P2)
+
+**In scope:** layout quality, thumbnail generation, rate limiting on API-key routes.
+**Out of scope:** billing/quotas, analytics dashboards, multi-region, caching layers.
+
+---
+
 ## Future Considerations
 
 - OAuth providers (Google, GitHub) — post-MVP auth extension

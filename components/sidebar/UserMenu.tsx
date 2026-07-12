@@ -40,6 +40,12 @@ export function UserMenu({ name }: Props) {
           <div className="px-3 py-2 border-b border-zinc-700">
             <p className="text-zinc-300 text-xs font-medium truncate">{name}</p>
           </div>
+          <a
+            href="/settings/api-keys"
+            className="block w-full text-left px-3 py-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 text-xs transition-colors"
+          >
+            API keys
+          </a>
           <button
             onClick={() => signOut({ callbackUrl: "/sign-in" })}
             className="w-full text-left px-3 py-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 text-xs transition-colors"

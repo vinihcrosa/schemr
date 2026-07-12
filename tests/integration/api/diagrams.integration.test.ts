@@ -21,6 +21,10 @@ vi.mock("@/lib/auth", () => ({
     if (!currentUserId) return null
     return { user: { id: currentUserId, email: "test@test.com" } }
   },
+  requireActor: async () => {
+    if (!currentUserId) throw new Response(null, { status: 401 })
+    return { userId: currentUserId, source: "session" as const }
+  },
 }))
 
 beforeEach(async () => {
