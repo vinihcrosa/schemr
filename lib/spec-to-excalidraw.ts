@@ -358,7 +358,13 @@ export async function specToExcalidraw(
   let skeleton: readonly Sk[]
   let files: Record<string, unknown> | undefined
   try {
-    const result = await parseMermaidToExcalidraw(spec, { fontSize: 16 })
+    // securityLevel:"strict" keeps Mermaid from executing click/script
+    // directives during parsing (security note). The package ships an
+    // incomplete MermaidConfig type, so the config is cast.
+    const result = await parseMermaidToExcalidraw(spec, {
+      securityLevel: "strict",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
     skeleton = result.elements as unknown as Sk[]
     files = result.files as Record<string, unknown> | undefined
   } catch (err) {
