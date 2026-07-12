@@ -4,6 +4,9 @@ import { db } from "@/lib/db"
 const KEY_PREFIX = "sk_"
 const PREFIX_DISPLAY_LEN = 11 // "sk_" + 8 chars
 
+/** Don't re-bump `lastUsedAt` more often than this — halves write traffic under MCP polling. */
+const LAST_USED_THROTTLE_MS = 5 * 60 * 1000
+
 export type ApiKeySummary = {
   id: string
   label: string
@@ -55,7 +58,7 @@ function isPrismaUniqueViolation(err: unknown): boolean {
 export async function createApiKey(
   userId: string,
   label?: string
-): Promise<{ id: string; raw: string; prefix: string; label: string }> {
+): Promise<{ id: string; raw: string; prefix: string; label: string; scopes: string[] }> {
   for (let attempt = 0; attempt < 3; attempt++) {
     const { raw, hashedKey, prefix } = generateApiKey()
     try {
@@ -66,9 +69,9 @@ export async function createApiKey(
           prefix,
           ...(label ? { label } : {}),
         },
-        select: { id: true, label: true },
+        select: { id: true, label: true, scopes: true },
       })
-      return { id: row.id, raw, prefix, label: row.label }
+      return { id: row.id, raw, prefix, label: row.label, scopes: row.scopes }
     } catch (err) {
       if (isPrismaUniqueViolation(err) && attempt < 2) continue
       throw err
@@ -108,18 +111,24 @@ export async function resolveApiKey(
   const hashedKey = hashApiKey(raw)
   const row = await db.apiKey.findUnique({
     where: { hashedKey },
-    select: { id: true, userId: true, scopes: true, revokedAt: true },
+    select: { id: true, userId: true, scopes: true, revokedAt: true, lastUsedAt: true },
   })
   if (!row || row.revokedAt) return null
 
-  // Best-effort usage tracking — failures must not fail auth.
-  try {
-    await db.apiKey.update({
-      where: { id: row.id },
-      data: { lastUsedAt: new Date() },
-    })
-  } catch {
-    // swallow
+  // Best-effort usage tracking — failures must not fail auth. Throttled so we
+  // don't add a write on every request (MCP polling would otherwise double it).
+  const now = Date.now()
+  const stale =
+    !row.lastUsedAt || now - row.lastUsedAt.getTime() >= LAST_USED_THROTTLE_MS
+  if (stale) {
+    try {
+      await db.apiKey.update({
+        where: { id: row.id },
+        data: { lastUsedAt: new Date(now) },
+      })
+    } catch {
+      // swallow
+    }
   }
 
   return { userId: row.userId, scopes: row.scopes }

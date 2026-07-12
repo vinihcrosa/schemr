@@ -14,10 +14,32 @@ type KeyRow = Omit<ApiKeySummary, "lastUsedAt" | "revokedAt" | "createdAt"> & {
   createdAt: string
 }
 
+// Server components hand us dates as ISO strings, matching KeyRow at runtime.
+type SerializedKey = Omit<
+  ApiKeySummary,
+  "lastUsedAt" | "revokedAt" | "createdAt"
+> & {
+  lastUsedAt: string | Date | null
+  revokedAt: string | Date | null
+  createdAt: string | Date
+}
+
+const iso = (v: string | Date | null): string | null =>
+  v == null ? null : v instanceof Date ? v.toISOString() : v
+
+function toKeyRow(k: SerializedKey): KeyRow {
+  return {
+    ...k,
+    lastUsedAt: iso(k.lastUsedAt),
+    revokedAt: iso(k.revokedAt),
+    createdAt: iso(k.createdAt) as string,
+  }
+}
+
 type RevokeMode = { id: string } | null
 
 export function ApiKeyManager({ initialKeys }: Props) {
-  const [keys, setKeys] = useState<KeyRow[]>(initialKeys as unknown as KeyRow[])
+  const [keys, setKeys] = useState<KeyRow[]>(() => initialKeys.map(toKeyRow))
   const [label, setLabel] = useState("")
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -52,7 +74,7 @@ export function ApiKeyManager({ initialKeys }: Props) {
           id: data.id,
           label: data.label,
           prefix: data.prefix,
-          scopes: ["diagrams"],
+          scopes: data.scopes ?? [],
           lastUsedAt: null,
           revokedAt: null,
           createdAt: new Date().toISOString(),

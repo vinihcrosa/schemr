@@ -18,7 +18,8 @@ export async function requireSession(): Promise<Session> {
   return session
 }
 
-const BEARER_PREFIX = "Bearer "
+// RFC 7235: the scheme is case-insensitive.
+const BEARER_RE = /^Bearer\s+/i
 
 /**
  * Resolve a request to a single userId from EITHER a bearer API key OR the
@@ -27,8 +28,8 @@ const BEARER_PREFIX = "Bearer "
  */
 export async function resolveActor(req: Request): Promise<Actor | null> {
   const authz = req.headers.get("authorization")
-  if (authz?.startsWith(BEARER_PREFIX)) {
-    const raw = authz.slice(BEARER_PREFIX.length).trim()
+  if (authz && BEARER_RE.test(authz)) {
+    const raw = authz.replace(BEARER_RE, "").trim()
     const resolved = await resolveApiKey(raw)
     return resolved ? { userId: resolved.userId, source: "apikey" } : null
   }

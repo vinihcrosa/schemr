@@ -46,7 +46,13 @@ export async function POST(req: NextRequest) {
   const created = await createApiKey(session.user.id, parsed.data.label)
   // Expose the raw secret as `key` — the only time it is ever returned.
   return NextResponse.json(
-    { id: created.id, key: created.raw, prefix: created.prefix, label: created.label },
+    {
+      id: created.id,
+      key: created.raw,
+      prefix: created.prefix,
+      label: created.label,
+      scopes: created.scopes,
+    },
     { status: 201 }
   )
 }
