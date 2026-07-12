@@ -1,7 +1,7 @@
 // E2E tests require: npm run build and npm start. Run: npm run test:e2e
 
 import { test, expect } from "@playwright/test"
-import { uniqueEmail, signUp, createDiagram, openTagManager } from "./helpers"
+import { uniqueEmail, signUp, createDiagram, newDiagram, openTagManager } from "./helpers"
 
 async function createTagInManager(page: Parameters<typeof test>[1]["page"], name: string) {
   const input = page.getByRole("textbox", { name: /tag name/i })
@@ -19,7 +19,7 @@ test("create tag 'infra' appears in tag manager list", async ({ page }) => {
   await openTagManager(page)
   await createTagInManager(page, "infra")
 
-  await expect(page.getByText("infra")).toBeVisible()
+  await expect(page.getByRole("button", { name: /delete infra/i })).toBeVisible()
 })
 
 // ─── 2. Duplicate shows "Tag already exists" ──────────────────────────────────
@@ -31,7 +31,7 @@ test("creating duplicate tag shows 'Tag already exists' error", async ({ page })
 
   await openTagManager(page)
   await createTagInManager(page, "infra")
-  await expect(page.getByText("infra")).toBeVisible()
+  await expect(page.getByRole("button", { name: /delete infra/i })).toBeVisible()
 
   // Try to create the same tag again
   await createTagInManager(page, "infra")
@@ -61,7 +61,7 @@ test("assigning tag to diagram shows chip on sidebar item", async ({ page }) => 
   await page.getByRole("option", { name: "infra" }).click()
 
   // Chip should appear on the sidebar item
-  await expect(currentItem.getByText("infra")).toBeVisible()
+  await expect(currentItem.locator("[data-testid=\"tag-chip\"]").filter({ hasText: "infra" })).toBeVisible()
 })
 
 // ─── 4. Remove chip disappears ────────────────────────────────────────────────
@@ -80,12 +80,13 @@ test("removing tag chip from diagram causes chip to disappear", async ({ page })
   await currentItem.hover()
   await page.getByRole("button", { name: /add tag/i }).click()
   await page.getByRole("option", { name: "infra" }).click()
-  await expect(currentItem.getByText("infra")).toBeVisible()
+  await expect(currentItem.locator("[data-testid=\"tag-chip\"]").filter({ hasText: "infra" })).toBeVisible()
 
+  await page.keyboard.press("Escape")
   // Remove the chip by clicking the × on the tag chip
   await currentItem.getByRole("button", { name: /remove infra|×/i }).click()
 
-  await expect(currentItem.getByText("infra")).not.toBeVisible()
+  await expect(currentItem.locator("[data-testid=\"tag-chip\"]").filter({ hasText: "infra" })).not.toBeVisible()
 })
 
 // ─── 5. Delete tag from manager ───────────────────────────────────────────────
@@ -97,14 +98,14 @@ test("deleting tag from tag manager removes it from the list", async ({ page }) 
 
   await openTagManager(page)
   await createTagInManager(page, "infra")
-  await expect(page.getByText("infra")).toBeVisible()
+  await expect(page.getByRole("button", { name: /delete infra/i })).toBeVisible()
 
   // Click delete on the "infra" tag (first confirm step)
   await page.getByRole("button", { name: /delete infra/i }).click()
   // Confirm deletion
   await page.getByRole("button", { name: /confirm/i }).click()
 
-  await expect(page.getByText("infra")).not.toBeVisible()
+  await expect(page.getByRole("button", { name: /delete infra/i })).not.toBeVisible()
 })
 
 // ─── 6. Tag filter shows only tagged diagrams ─────────────────────────────────
@@ -115,10 +116,8 @@ test("selecting tag filter shows only diagrams tagged with that tag", async ({ p
 
   // Create 3 diagrams
   await createDiagram(page)
-  await page.getByRole("button", { name: /new diagram/i }).click()
-  await expect(page).toHaveURL(/\/diagrams\//)
-  await page.getByRole("button", { name: /new diagram/i }).click()
-  await expect(page).toHaveURL(/\/diagrams\//)
+  await newDiagram(page)
+  await newDiagram(page)
 
   // Create the "infra" tag
   await openTagManager(page)
@@ -135,7 +134,7 @@ test("selecting tag filter shows only diagrams tagged with that tag", async ({ p
   await page.getByRole("button", { name: /^infra$/i }).first().click()
 
   // Only 1 diagram should appear in the sidebar list
-  const items = page.locator('[data-testid="sidebar-expanded"] [role="button"]')
+  const items = page.locator('[data-testid="sidebar-item"]')
   await expect(items).toHaveCount(1, { timeout: 5000 })
 })
 
@@ -147,8 +146,7 @@ test("deselecting tag filter restores the full diagram list", async ({ page }) =
 
   // Create 2 diagrams
   await createDiagram(page)
-  await page.getByRole("button", { name: /new diagram/i }).click()
-  await expect(page).toHaveURL(/\/diagrams\//)
+  await newDiagram(page)
 
   // Create the "infra" tag and assign it to the current diagram
   await openTagManager(page)
@@ -163,7 +161,7 @@ test("deselecting tag filter restores the full diagram list", async ({ page }) =
   // Activate the filter — sidebar should show 1 diagram
   await page.getByRole("button", { name: /^infra$/i }).first().click()
   await expect(
-    page.locator('[data-testid="sidebar-expanded"] [role="button"]')
+    page.locator('[data-testid="sidebar-item"]')
   ).toHaveCount(1, { timeout: 5000 })
 
   // Deselect by clicking the active filter pill again
@@ -171,7 +169,7 @@ test("deselecting tag filter restores the full diagram list", async ({ page }) =
 
   // Both diagrams should be visible again
   await expect(
-    page.locator('[data-testid="sidebar-expanded"] [role="button"]')
+    page.locator('[data-testid="sidebar-item"]')
   ).toHaveCount(2, { timeout: 5000 })
 })
 
@@ -191,8 +189,7 @@ test("search query and tag filter compose to show intersection only", async ({ p
   await renameInput.press("Enter")
 
   // Create diagram "beta-infra"
-  await page.getByRole("button", { name: /new diagram/i }).click()
-  await expect(page).toHaveURL(/\/diagrams\//)
+  await newDiagram(page)
   const betaItem = page.locator('[aria-current="page"]').locator("..")
   await betaItem.hover()
   await page.getByRole("button", { name: /rename untitled/i }).click()
@@ -201,8 +198,7 @@ test("search query and tag filter compose to show intersection only", async ({ p
   await renameInput2.press("Enter")
 
   // Create diagram "gamma-other"
-  await page.getByRole("button", { name: /new diagram/i }).click()
-  await expect(page).toHaveURL(/\/diagrams\//)
+  await newDiagram(page)
   const gammaItem = page.locator('[aria-current="page"]').locator("..")
   await gammaItem.hover()
   await page.getByRole("button", { name: /rename untitled/i }).click()
@@ -233,7 +229,7 @@ test("search query and tag filter compose to show intersection only", async ({ p
   // Activate "infra" tag filter — should show alpha-infra and beta-infra (2)
   await page.getByRole("button", { name: /^infra$/i }).first().click()
   await expect(
-    page.locator('[data-testid="sidebar-expanded"] [role="button"]')
+    page.locator('[data-testid="sidebar-item"]')
   ).toHaveCount(2, { timeout: 5000 })
 
   // Now also type "alpha" in the search input — should narrow to 1
@@ -241,7 +237,7 @@ test("search query and tag filter compose to show intersection only", async ({ p
   await searchInput.fill("alpha")
 
   await expect(
-    page.locator('[data-testid="sidebar-expanded"] [role="button"]')
+    page.locator('[data-testid="sidebar-item"]')
   ).toHaveCount(1, { timeout: 5000 })
   await expect(page.getByText("alpha-infra")).toBeVisible()
   await expect(page.getByText("beta-infra")).not.toBeVisible()

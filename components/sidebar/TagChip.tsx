@@ -10,7 +10,7 @@ export function TagChip({ name, onRemove, active }: Props) {
     : "border-slate-200 bg-slate-50 text-slate-600"
 
   return (
-    <span className={`${baseClasses} ${colorClasses}`}>
+    <span className={`${baseClasses} ${colorClasses}`} data-testid="tag-chip">
       {name}
       {onRemove !== undefined && (
         <button

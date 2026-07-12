@@ -211,19 +211,19 @@
 
 ### Features
 
-**Spec → Diagram Conversion** - PLANNED
+**Spec → Diagram Conversion** - SPECIFIED → [spec](../features/m9-generation/spec.md)
 
 - `POST /api/diagrams/from-spec` — accepts `{ name?, folderId?, spec, format: "mermaid" }` (P1)
 - Convert via `@excalidraw/mermaid-to-excalidraw` (P1)
 - Persist as a normal Diagram; returns `DiagramDetail` (reuses `createDiagram`) (P1)
 
-**Element Normalization** - PLANNED
+**Element Normalization** - SPECIFIED
 
 - Fill required Excalidraw fields: fractional `index`, `seed`, `version`, `versionNonce`, `roundness`, `groupIds` (P1)
 - Repair/verify arrow `boundElements` + `startBinding`/`endBinding` so connectors stay attached (P1)
 - Deterministic output (no reliance on `Date.now()`/random for identity) (P1)
 
-**Conversion Validation** - PLANNED
+**Conversion Validation** - SPECIFIED
 
 - Test suite: spec in → deserialize via `lib/excalidraw.ts` → asserts elements valid + bindings intact (P1)
 - Graceful 400 on unparseable spec (P1)

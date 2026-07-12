@@ -114,7 +114,7 @@ export function SidebarItem({ id, name, isCurrent, thumbnail, onRename, onDelete
 
   if (mode === "renaming") {
     return (
-      <div className="px-2 py-1.5">
+      <div className="px-2 py-1.5" data-testid="sidebar-item">
         <input
           ref={inputRef}
           value={editValue}
@@ -130,7 +130,7 @@ export function SidebarItem({ id, name, isCurrent, thumbnail, onRename, onDelete
 
   if (mode === "delete-pending") {
     return (
-      <div className="group flex items-center gap-1 px-2 py-1.5 rounded-md bg-red-950/40 border border-red-900/50">
+      <div className="group flex items-center gap-1 px-2 py-1.5 rounded-md bg-red-950/40 border border-red-900/50" data-testid="sidebar-item">
         <span className="flex-1 text-zinc-400 text-xs truncate">Delete?</span>
         <button
           onClick={handleCancelDelete}
@@ -155,6 +155,7 @@ export function SidebarItem({ id, name, isCurrent, thumbnail, onRename, onDelete
     <>
       <div
         ref={rowRef}
+        data-testid="sidebar-item"
         onClick={handleRowClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}

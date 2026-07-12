@@ -118,7 +118,7 @@ describe("DiagramSidebar — tag management", () => {
     await user.click(screen.getByRole("button", { name: /manage tags/i }))
     const input = screen.getByRole("textbox", { name: /new tag name/i })
     await user.type(input, "devops")
-    await user.click(screen.getByRole("button", { name: /create/i }))
+    await user.click(screen.getByRole("button", { name: /create tag/i }))
     await waitFor(() =>
       expect(vi.mocked(global.fetch)).toHaveBeenCalledWith(
         "/api/tags",
@@ -146,7 +146,7 @@ describe("DiagramSidebar — tag management", () => {
     await user.click(screen.getByRole("button", { name: /manage tags/i }))
     const input = screen.getByRole("textbox", { name: /new tag name/i })
     await user.type(input, "devops")
-    await user.click(screen.getByRole("button", { name: /create/i }))
+    await user.click(screen.getByRole("button", { name: /create tag/i }))
     // Tag should appear in TagManager list (as a delete button target)
     await waitFor(() =>
       expect(screen.getByRole("button", { name: /delete devops/i })).toBeInTheDocument()

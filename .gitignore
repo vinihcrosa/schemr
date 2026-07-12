@@ -46,3 +46,7 @@ next-env.d.ts
 .codex
 
 tmp.md
+
+# Playwright E2E artifacts
+/test-results/
+/playwright-report/

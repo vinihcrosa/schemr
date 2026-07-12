@@ -1,0 +1,13 @@
+# Repo rule: the ENTIRE test suite must pass before any push — not just the
+# tests for the current feature. A single failure anywhere blocks the push.
+#
+# Needs the test database reachable (TEST_DATABASE_URL). Load .env.local if it
+# exists so the DB URLs are available to the run.
+if [ -f .env.local ]; then
+  set -a
+  . ./.env.local
+  set +a
+fi
+
+echo "pre-push: running the full test suite (unit + integration + e2e)…"
+npm run test:all
