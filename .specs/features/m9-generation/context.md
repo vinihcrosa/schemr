@@ -112,6 +112,26 @@ Rationale: an AI asking to create an empty diagram is almost always a mistake, a
 
 ---
 
+## D6 — Headless conversion limitations (discovered in implementation)
+
+Verified type support under the jsdom runtime (mermaid 10.9.3):
+
+| Mermaid type | Status |
+|---|---|
+| flowchart (label-free edges) | ✅ full — nodes, diamonds, arrows, bindings |
+| sequence | ✅ full |
+| class | ✅ full |
+| ER | ⚠️ converts without error (minimal geometry); P2 |
+| **flowchart with edge labels** (`-->\|text\|`) | ❌ **fails gracefully → 400** |
+
+The edge-label case is the one real gap: Mermaid's edge-label placement walks
+real SVG path geometry (`getPointAtLength`) that jsdom cannot provide, throwing
+"Could not find a suitable point for the given distance". We stub path metrics
+enough for ER/plain edges, but labeled edges still fail. This is caught and
+returned as a graceful `400` (never a crash) and is asserted by an explicit
+test so it's tracked, not silent. Fixing it would require Option B (headless
+Chromium) — deferred; label-free flowcharts cover the common case.
+
 ## Open confirmations for the user
 
 - **D1 default (Option A, spike-gated)** — confirm you're OK spiking jsdom first and only escalating to

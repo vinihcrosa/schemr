@@ -41,11 +41,32 @@ function patchSvgMetrics(win: Record<string, unknown>): void {
   if (svgProto) {
     svgProto.getComputedTextLength = textLen
     svgProto.getBBox = bbox
+    // Path/edge metrics (Mermaid ER + edge-label layout); absent in jsdom.
+    // Return a positive length and a monotonic point so Mermaid can place edge
+    // labels without failing its "point at distance" search.
+    svgProto.getTotalLength = function () {
+      return 1000
+    }
+    svgProto.getPointAtLength = function (d: number) {
+      return { x: typeof d === "number" ? d : 0, y: 0 }
+    }
   }
   const elProto = (win.Element as
     | { prototype: Record<string, unknown> }
     | undefined)?.prototype
   if (elProto) elProto.getBBox = bbox
+  // SVGPathElement metrics (used by Mermaid's ER/edge layout) are absent in jsdom.
+  const pathProto = (win.SVGPathElement as
+    | { prototype: Record<string, unknown> }
+    | undefined)?.prototype
+  if (pathProto) {
+    pathProto.getTotalLength = function () {
+      return 0
+    }
+    pathProto.getPointAtLength = function () {
+      return { x: 0, y: 0 }
+    }
+  }
 }
 
 let domReady = false
